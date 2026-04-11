@@ -1,0 +1,169 @@
+### CipherTrust API — REST Client test file
+### Install VS Code extension: humao.rest-client
+### Set @token after login
+
+@baseUrl = http://localhost:8000/api/v1
+@token = YOUR_JWT_TOKEN_HERE
+@orgId = 1
+@consentId = 1
+@proofId = 1
+
+# ─── Health ───────────────────────────────────────────────────────────────────
+
+### Health check
+GET {{baseUrl}}/health
+
+# ─── Auth ─────────────────────────────────────────────────────────────────────
+
+### Register org admin
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@testcorp.in",
+  "password": "password123",
+  "full_name": "Test Admin",
+  "role": "org_admin"
+}
+
+###
+
+### Register regulator
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "reg@dpdpa.gov.in",
+  "password": "password123",
+  "full_name": "DPDPA Regulator",
+  "role": "regulator"
+}
+
+###
+
+### Login (copy access_token → @token above)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@testcorp.in",
+  "password": "password123"
+}
+
+# ─── Organizations ────────────────────────────────────────────────────────────
+
+### Create organisation
+POST {{baseUrl}}/orgs/
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "TestCorp Pvt Ltd"
+}
+
+###
+
+### List organisations
+GET {{baseUrl}}/orgs/
+Authorization: Bearer {{token}}
+
+###
+
+### Get organisation
+GET {{baseUrl}}/orgs/{{orgId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Register org on Algorand (connect Pera Wallet first)
+POST {{baseUrl}}/orgs/{{orgId}}/register-onchain
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "wallet_address": "YOUR_ALGORAND_WALLET_ADDRESS"
+}
+
+# ─── Consent Records ──────────────────────────────────────────────────────────
+
+### Create consent record
+POST {{baseUrl}}/consent/{{orgId}}/records
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "user_identifier": "user123@example.com",
+  "consent_type": "data_processing",
+  "purpose": "Processing user data for core service delivery under DPDPA Section 7(a)"
+}
+
+###
+
+### List consent records
+GET {{baseUrl}}/consent/{{orgId}}/records
+Authorization: Bearer {{token}}
+
+###
+
+### Anchor consent on Algorand
+POST {{baseUrl}}/consent/{{orgId}}/records/{{consentId}}/anchor
+Authorization: Bearer {{token}}
+
+###
+
+### Revoke consent
+DELETE {{baseUrl}}/consent/{{orgId}}/records/{{consentId}}
+Authorization: Bearer {{token}}
+
+# ─── ZK Proofs ────────────────────────────────────────────────────────────────
+
+### Generate ZK proof
+POST {{baseUrl}}/proofs/{{orgId}}/generate
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "proof_type": "consent_compliance",
+  "consent_ids": [1, 2, 3]
+}
+
+###
+
+### Submit proof on-chain
+POST {{baseUrl}}/proofs/{{orgId}}/submit/{{proofId}}
+Authorization: Bearer {{token}}
+
+###
+
+### List proofs
+GET {{baseUrl}}/proofs/{{orgId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Get proof details
+GET {{baseUrl}}/proofs/{{orgId}}/{{proofId}}
+Authorization: Bearer {{token}}
+
+# ─── Compliance ───────────────────────────────────────────────────────────────
+
+### Compliance summary (regulator view)
+GET {{baseUrl}}/compliance/{{orgId}}/summary
+Authorization: Bearer {{token}}
+
+###
+
+### Issue compliance certificate
+POST {{baseUrl}}/compliance/{{orgId}}/issue-certificate?proof_id={{proofId}}&regulation=DPDPA
+Authorization: Bearer {{token}}
+
+###
+
+### List certificates
+GET {{baseUrl}}/compliance/{{orgId}}/certificates
+Authorization: Bearer {{token}}
+
+###
+
+### Verify by Algorand transaction ID
+GET {{baseUrl}}/compliance/verify/YOUR_ALGORAND_TXN_ID
