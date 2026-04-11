@@ -1,0 +1,14 @@
+{
+  "name": "ciphertrust-zk-circuits",
+  "version": "1.0.0",
+  "description": "ZK proof circuits for CipherTrust consent compliance",
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "prove": "node scripts/generate_proof.js --input input.json",
+    "verify": "npx snarkjs groth16 verify build/verification_key.json build/latest_public.json build/latest_proof.json"
+  },
+  "dependencies": {
+    "circomlibjs": "^0.1.7",
+    "snarkjs": "^0.7.3"
+  }
+}
