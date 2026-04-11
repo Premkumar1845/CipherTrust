@@ -1,0 +1,84 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ciphertrust_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ciphertrust
+      POSTGRES_PASSWORD: ciphertrust_secret
+      POSTGRES_DB: ciphertrust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ciphertrust"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ciphertrust_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ciphertrust_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://ciphertrust:ciphertrust_secret@postgres:5432/ciphertrust
+      - REDIS_URL=redis://redis:6379
+      - ALGORAND_NODE_URL=${ALGORAND_NODE_URL:-https://testnet-api.algonode.cloud}
+      - ALGORAND_INDEXER_URL=${ALGORAND_INDEXER_URL:-https://testnet-idx.algonode.cloud}
+      - ALGORAND_NETWORK=${ALGORAND_NETWORK:-testnet}
+      - SECRET_KEY=${SECRET_KEY:-supersecretkey_change_in_production}
+      - JWT_ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./zk-circuits/build:/app/zk-circuits/build:ro
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ciphertrust_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_ALGORAND_NETWORK=testnet
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: sh -c "npm install --legacy-peer-deps && npm run dev"
+
+volumes:
+  postgres_data:
+  redis_data:
