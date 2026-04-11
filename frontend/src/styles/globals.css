@@ -1,0 +1,395 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design Tokens ─────────────────────────────────────────────────────── */
+:root {
+  --color-bg: #0B1326;
+  --color-card: rgba(15, 23, 42, 0.6);
+  --color-border: rgba(99, 102, 241, 0.12);
+  --color-text: #e2e8f0;
+  --color-muted: #64748b;
+  --color-accent: #6366f1;
+  --font-display: "Manrope", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-manrope: "Manrope", system-ui, sans-serif;
+  --font-inter: "Inter", system-ui, sans-serif;
+  --font-jetbrains: "JetBrains Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.4);
+}
+
+/* ─── Glassmorphism System ──────────────────────────────────────────────── */
+@layer components {
+  .glass {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+
+  .glass-subtle {
+    background: rgba(15, 23, 42, 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(99, 102, 241, 0.06);
+    border-radius: 12px;
+  }
+
+  .glass-strong {
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);
+  }
+
+  .glass-sidebar {
+    background: rgba(11, 19, 38, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-right: 1px solid rgba(99, 102, 241, 0.08);
+  }
+
+  /* Gradient borders */
+  .gradient-border {
+    position: relative;
+  }
+
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(124, 58, 237, 0.15), transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Neon glow hover */
+  .hover-glow {
+    transition: all 0.3s ease;
+  }
+
+  .hover-glow:hover {
+    border-color: rgba(99, 102, 241, 0.25);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.08), 0 8px 32px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply relative px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-medium text-sm transition-all duration-300 shadow-glow-sm hover:shadow-glow-md;
+  }
+
+  .btn-secondary {
+    @apply px-5 py-2.5 border border-white/10 hover:border-indigo-500/30 text-slate-300 hover:text-white rounded-xl font-medium text-sm transition-all duration-300 bg-white/[0.02] hover:bg-white/[0.05];
+  }
+
+  .btn-ghost {
+    @apply px-4 py-2 text-slate-400 hover:text-white rounded-xl text-sm transition-all duration-300 hover:bg-white/[0.05];
+  }
+
+  .btn-danger {
+    @apply px-5 py-2.5 bg-red-600/80 hover:bg-red-500 text-white rounded-xl font-medium text-sm transition-all duration-300;
+  }
+
+  /* Input styles */
+  .input-field {
+    @apply w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-300;
+  }
+
+  .input-label {
+    @apply block text-xs font-medium text-slate-400 mb-2 tracking-wide;
+  }
+
+  /* Status badges */
+  .badge-compliant {
+    @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_10px_rgba(16, 185, 129, 0.1)];
+  }
+
+  .badge-pending {
+    @apply bg-amber-500/10 text-amber-400 border border-amber-500/20;
+  }
+
+  .badge-non-compliant {
+    @apply bg-red-500/10 text-red-400 border border-red-500/20;
+  }
+
+  .badge-verified {
+    @apply bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-[0_0_10px_rgba(99, 102, 241, 0.1)];
+  }
+
+  /* Dot indicators */
+  .dot-verified {
+    @apply w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-[0_0_6px_rgba(16, 185, 129, 0.5)];
+  }
+
+  .dot-pending {
+    @apply w-2 h-2 rounded-full bg-amber-400 inline-block animate-pulse;
+  }
+
+  .dot-failed {
+    @apply w-2 h-2 rounded-full bg-red-400 inline-block;
+  }
+
+  /* Shimmer loading */
+  .shimmer {
+    background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.05), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}
+
+/* ─── Selection ─────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(99, 102, 241, 0.3);
+  color: #fff;
+}
+
+/* ─── Focus ring ────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.5);
+  outline-offset: 2px;
+}
+
+/* ─── Scroll-triggered reveal animations ────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-delay-1 {
+  transition-delay: 0.1s;
+}
+
+.reveal-delay-2 {
+  transition-delay: 0.2s;
+}
+
+.reveal-delay-3 {
+  transition-delay: 0.3s;
+}
+
+.reveal-delay-4 {
+  transition-delay: 0.4s;
+}
+
+/* ─── Animated gradient text ────────────────────────────────────────────── */
+.gradient-text-animated {
+  background: linear-gradient(270deg, #818cf8, #a78bfa, #22d3ee, #818cf8);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* ─── Hash scramble animation ───────────────────────────────────────────── */
+@keyframes hashRotate {
+  0% {
+    opacity: 0.3;
+    filter: blur(2px);
+  }
+
+  50% {
+    opacity: 1;
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 0.3;
+    filter: blur(2px);
+  }
+}
+
+.hash-animate {
+  animation: hashRotate 2s ease-in-out infinite;
+}
+
+/* ─── Proof generation loader ───────────────────────────────────────────── */
+@keyframes cryptoSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes cryptoPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 12px rgba(99, 102, 241, 0);
+  }
+}
+
+.crypto-loader {
+  animation: cryptoSpin 3s linear infinite;
+}
+
+.crypto-pulse {
+  animation: cryptoPulse 1.5s ease-in-out infinite;
+}
+
+/* ─── Success burst animation ───────────────────────────────────────────── */
+@keyframes successBurst {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-success-burst {
+  animation: successBurst 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─── Blockchain confirmation wave ──────────────────────────────────────── */
+@keyframes confirmWave {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.confirm-wave::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid rgba(16, 185, 129, 0.5);
+  animation: confirmWave 1.5s ease-out forwards;
+}
+
+/* ─── Neon line scan ────────────────────────────────────────────────────── */
+@keyframes scanLine {
+  0% {
+    top: 0;
+    opacity: 1;
+  }
+
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+.neon-scan::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #6366f1, transparent);
+  animation: scanLine 2s ease-in-out infinite;
+}
+
+/* ─── Status glow keyframes ─────────────────────────────────────────────── */
+@keyframes greenGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  }
+}
+
+@keyframes redPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  }
+}
+
+.glow-green {
+  animation: greenGlow 2s ease-in-out infinite;
+}
+
+.glow-red {
+  animation: redPulse 1.5s ease-in-out infinite;
+}
