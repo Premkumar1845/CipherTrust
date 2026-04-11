@@ -1,0 +1,143 @@
+{
+  "folders": [
+    { "name": "root", "path": "." },
+    { "name": "frontend", "path": "frontend" },
+    { "name": "backend", "path": "backend" },
+    { "name": "contracts", "path": "contracts" },
+    { "name": "zk-circuits", "path": "zk-circuits" }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.black-formatter",
+      "editor.formatOnSave": true
+    },
+    "python.defaultInterpreterPath": "${workspaceFolder:backend}/.venv/bin/python",
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "tailwindCSS.experimental.classRegex": [
+      ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+    ],
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.next": true,
+      "**/__pycache__": true,
+      "**/*.pyc": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/.next": true,
+      "**/zk-circuits/build": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.black-formatter",
+      "ms-python.pylint",
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss",
+      "dbaeumer.vscode-eslint",
+      "ms-vscode.vscode-typescript-next",
+      "humao.rest-client",
+      "ms-azuretools.vscode-docker",
+      "mtxr.sqltools",
+      "mtxr.sqltools-driver-pg"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Backend: FastAPI (uvicorn)",
+        "type": "python",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": ["main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"],
+        "cwd": "${workspaceFolder:backend}",
+        "envFile": "${workspaceFolder:root}/.env",
+        "console": "integratedTerminal"
+      },
+      {
+        "name": "Backend: Run tests",
+        "type": "python",
+        "request": "launch",
+        "module": "pytest",
+        "args": ["tests/", "-v", "--tb=short"],
+        "cwd": "${workspaceFolder:backend}",
+        "envFile": "${workspaceFolder:root}/.env",
+        "console": "integratedTerminal"
+      },
+      {
+        "name": "Backend: Seed database",
+        "type": "python",
+        "request": "launch",
+        "program": "seed.py",
+        "cwd": "${workspaceFolder:backend}",
+        "envFile": "${workspaceFolder:root}/.env",
+        "console": "integratedTerminal"
+      }
+    ],
+    "compounds": [
+      {
+        "name": "Full stack (backend + frontend)",
+        "configurations": ["Backend: FastAPI (uvicorn)"]
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Docker: start all services",
+        "type": "shell",
+        "command": "docker compose up -d",
+        "group": "build",
+        "presentation": { "reveal": "always", "panel": "new" }
+      },
+      {
+        "label": "Docker: stop all services",
+        "type": "shell",
+        "command": "docker compose down",
+        "group": "build"
+      },
+      {
+        "label": "Backend: install deps",
+        "type": "shell",
+        "command": "pip install -r requirements.txt -r requirements-test.txt",
+        "options": { "cwd": "${workspaceFolder:backend}" }
+      },
+      {
+        "label": "Backend: run migrations",
+        "type": "shell",
+        "command": "alembic upgrade head",
+        "options": { "cwd": "${workspaceFolder:backend}" }
+      },
+      {
+        "label": "Backend: seed database",
+        "type": "shell",
+        "command": "python seed.py",
+        "options": { "cwd": "${workspaceFolder:backend}" }
+      },
+      {
+        "label": "Frontend: install deps",
+        "type": "shell",
+        "command": "npm install",
+        "options": { "cwd": "${workspaceFolder:frontend}" }
+      },
+      {
+        "label": "Frontend: dev server",
+        "type": "shell",
+        "command": "npm run dev",
+        "options": { "cwd": "${workspaceFolder:frontend}" },
+        "isBackground": true
+      },
+      {
+        "label": "ZK: compile circuit",
+        "type": "shell",
+        "command": "node scripts/setup.js",
+        "options": { "cwd": "${workspaceFolder:zk-circuits}" }
+      }
+    ]
+  }
+}
