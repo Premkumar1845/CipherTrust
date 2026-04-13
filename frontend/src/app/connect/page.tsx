@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Wallet, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { usePeraWallet } from "@/lib/usePeraWallet";
-import { NetworkBackground } from "@/components/ui/NetworkBackground";
-import { AnimatedLogo } from "@/components/ui/AnimatedLogo";
+
+const NetworkBackground = dynamic(() => import("@/components/ui/NetworkBackground").then((m) => m.NetworkBackground), { ssr: false });
+const AnimatedLogo = dynamic(() => import("@/components/ui/AnimatedLogo").then((m) => m.AnimatedLogo), { ssr: false });
 
 export default function ConnectWalletPage() {
     const router = useRouter();
@@ -30,7 +32,7 @@ export default function ConnectWalletPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 relative">
-            <NetworkBackground nodeCount={50} className="fixed inset-0 z-0" />
+            <NetworkBackground nodeCount={25} className="fixed inset-0 z-0" />
 
             {/* Glow orbs */}
             <div className="fixed inset-0 pointer-events-none z-[1]">
