@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Shield, Lock, FileCheck, Zap, ChevronRight, GitBranch, ArrowRight,
@@ -66,7 +67,13 @@ const useCases = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const revealRef = useRef<HTMLDivElement>(null);
+
+  // Redirect to wallet connection page
+  useEffect(() => {
+    router.replace("/connect");
+  }, [router]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -109,7 +116,7 @@ export default function Home() {
       <section className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 py-28">
         <div className="relative">
           <div className="flex justify-center mb-8 animate-fade-in">
-            <AnimatedLogo size={80} />
+            <AnimatedLogo size={120} />
           </div>
 
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass border-indigo-500/15 text-indigo-300 text-xs mb-8 animate-fade-in">
