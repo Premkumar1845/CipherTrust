@@ -44,6 +44,10 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    from app.models.user import User
+    from sqlalchemy import select
+
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         user_id: str = payload.get("sub")
@@ -51,9 +55,6 @@ async def get_current_user(
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-
-    from app.models.user import User
-    from sqlalchemy import select
 
     result = await db.execute(select(User).where(User.id == int(user_id)))
     user = result.scalar_one_or_none()
