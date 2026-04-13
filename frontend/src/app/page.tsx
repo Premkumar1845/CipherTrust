@@ -3,12 +3,14 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   Shield, Lock, FileCheck, Zap, ChevronRight, GitBranch, ArrowRight,
   Sparkles, Building2, HeartPulse, Globe2
 } from "lucide-react";
-import { NetworkBackground } from "@/components/ui/NetworkBackground";
-import { AnimatedLogo } from "@/components/ui/AnimatedLogo";
+
+const NetworkBackground = dynamic(() => import("@/components/ui/NetworkBackground").then((m) => m.NetworkBackground), { ssr: false });
+const AnimatedLogo = dynamic(() => import("@/components/ui/AnimatedLogo").then((m) => m.AnimatedLogo), { ssr: false });
 
 const features = [
   {
@@ -87,7 +89,7 @@ export default function Home() {
   return (
     <div ref={revealRef} className="min-h-screen flex flex-col relative overflow-hidden">
       {/* Particle network background */}
-      <NetworkBackground nodeCount={60} className="fixed inset-0 z-0" />
+      <NetworkBackground nodeCount={25} className="fixed inset-0 z-0" />
 
       {/* Background glow orbs */}
       <div className="fixed inset-0 pointer-events-none z-[1]">
