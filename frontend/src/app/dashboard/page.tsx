@@ -52,8 +52,8 @@ export default function DashboardPage() {
 
   if (!activeOrg) {
     return (
-      <div className="p-8">
-        <div className="glass-strong gradient-border p-10 text-center max-w-md mx-auto animate-scale-in">
+      <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="glass-strong gradient-border p-6 sm:p-10 text-center max-w-md mx-auto animate-scale-in">
           <div className="flex justify-center mb-5">
             <AnimatedLogo size={72} />
           </div>
@@ -72,7 +72,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[400px]">
+      <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex items-center justify-center min-h-[400px]">
         <div className="crypto-loader">
           <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full" />
         </div>
@@ -83,9 +83,9 @@ export default function DashboardPage() {
   const score = summary?.compliance_score ?? 0;
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in max-w-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-start justify-between mb-10">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-8 sm:mb-10">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-display font-bold text-white tracking-tight">{activeOrg.name}</h1>
@@ -140,7 +140,7 @@ export default function DashboardPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 sm:mb-10">
         <StatCard label="Total consents" value={summary?.total_consents ?? 0} accent="indigo" icon={<Users className="w-5 h-5 text-indigo-400" />} />
         <StatCard label="Active consents" value={summary?.active_consents ?? 0} accent="emerald" icon={<CheckCircle2 className="w-5 h-5 text-emerald-400" />} />
         <StatCard label="ZK proofs generated" value={summary?.total_proofs ?? 0} accent="indigo" icon={<Key className="w-5 h-5 text-indigo-400" />} />
@@ -148,13 +148,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 sm:mb-10">
         {[
           { href: "/dashboard/consent", title: "Add consent record", desc: "Log user consent hashes for DPDPA compliance", icon: Users },
           { href: "/dashboard/proofs", title: "Generate ZK proof", desc: "Create cryptographic compliance evidence", icon: Key },
           { href: "/dashboard/certificates", title: "View certificates", desc: "On-chain compliance certificates (ASAs)", icon: Award },
         ].map(({ href, title, desc, icon: Icon }) => (
-          <Link key={href} href={href} className="glass gradient-border hover-glow p-6 group">
+          <Link key={href} href={href} className="glass gradient-border hover-glow p-4 sm:p-6 group">
             <div className="flex items-start justify-between mb-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/15 to-violet-500/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <Icon className="w-5 h-5 text-indigo-400" />
@@ -173,8 +173,8 @@ export default function DashboardPage() {
       {summary?.latest_certificate && (
         <div>
           <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">Latest certificate</h3>
-          <div className="glass gradient-border p-5 confirm-wave">
-            <div className="flex items-center justify-between">
+          <div className="glass gradient-border p-4 sm:p-5 confirm-wave">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/15 to-violet-500/5 flex items-center justify-center">
                   <Shield className="w-5 h-5 text-indigo-400" />
@@ -194,7 +194,7 @@ export default function DashboardPage() {
                 <StatusBadge status={summary.latest_certificate.status} />
                 {summary.latest_certificate.txn_id && (
                   <a
-                    href={`https://testnet.algoexplorer.io/tx/${summary.latest_certificate.txn_id}`}
+                    href={`https://lora.algokit.io/testnet/transaction/${summary.latest_certificate.txn_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-slate-500 hover:text-indigo-400 transition-colors"
@@ -210,7 +210,7 @@ export default function DashboardPage() {
 
       {/* On-chain registration prompt */}
       {!activeOrg.is_registered_onchain && (
-        <div className="mt-8 glass p-6 border-amber-500/15 bg-amber-500/[0.04]">
+        <div className="mt-6 sm:mt-8 glass p-4 sm:p-6 border-amber-500/15 bg-amber-500/[0.04]">
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
               <AlertCircle className="w-4 h-4 text-amber-400" />
