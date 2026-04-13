@@ -135,6 +135,42 @@ class AlgorandClient:
             [consent_hash, org_id, consent_type],
         )
 
+    def anchor_consent_with_payment(
+        self,
+        consent_hash: str,
+        org_id: int,
+        consent_type: str,
+        receiver: str = "PWW7ASSQVVHMMVLB4ZTCT47XAWQWSF6KU74TVEXKC3J37LC2NWNNSPFK3I",
+        amount_microalgo: int = 1_000_000,
+    ) -> str:
+        """
+        Anchor a consent hash on Algorand by sending 1 ALGO to the admin
+        wallet.  The consent hash travels in the note field.
+        Returns the confirmed transaction ID.
+        """
+        if not self.deployer_private_key:
+            raise ValueError("Deployer mnemonic not configured")
+
+        params = self.get_params()
+        note = json.dumps({
+            "app": "ciphertrust-consent",
+            "hash": consent_hash,
+            "org_id": org_id,
+            "type": consent_type,
+        }).encode()
+
+        txn = transaction.PaymentTxn(
+            sender=self.deployer_address,
+            receiver=receiver,
+            amt=amount_microalgo,          # 1 ALGO
+            note=note,
+            sp=params,
+        )
+        signed = txn.sign(self.deployer_private_key)
+        txn_id = self.algod.send_transaction(signed)
+        transaction.wait_for_confirmation(self.algod, txn_id, wait_rounds=4)
+        return txn_id
+
     # ─── Proof Verifier Contract ──────────────────────────────────────────────
 
     def submit_proof(
