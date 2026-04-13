@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Eye, EyeOff, ArrowRight, Wallet } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { useStore } from "@/lib/store";
-import { NetworkBackground } from "@/components/ui/NetworkBackground";
-import { AnimatedLogo } from "@/components/ui/AnimatedLogo";
+
+const NetworkBackground = dynamic(() => import("@/components/ui/NetworkBackground").then((m) => m.NetworkBackground), { ssr: false });
+const AnimatedLogo = dynamic(() => import("@/components/ui/AnimatedLogo").then((m) => m.AnimatedLogo), { ssr: false });
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,7 +44,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative">
-      <NetworkBackground nodeCount={35} className="fixed inset-0 z-0" />
+      <NetworkBackground nodeCount={20} className="fixed inset-0 z-0" />
       <div className="fixed inset-0 pointer-events-none z-[1]">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/[0.06] rounded-full blur-[120px]" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-violet-600/[0.04] rounded-full blur-[80px]" />
