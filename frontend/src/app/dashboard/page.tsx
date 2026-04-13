@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Shield, AlertCircle, CheckCircle2, ExternalLink, Users, Key, Award, ArrowRight, Activity } from "lucide-react";
+import { Shield, AlertCircle, CheckCircle2, ExternalLink, Users, Key, Award, ArrowRight, Activity, Loader2 } from "lucide-react";
 import { complianceApi, orgApi } from "@/lib/api";
 import { useStore } from "@/lib/store";
 import { StatCard, StatusBadge, HashDisplay } from "@/components/ui/Cards";
@@ -10,10 +10,12 @@ import Link from "next/link";
 
 export default function DashboardPage() {
   const { activeOrg, setActiveOrg } = useStore();
+  const walletAddress = useStore((s) => s.walletAddress);
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [scoreAnimated, setScoreAnimated] = useState(0);
+  const [registering, setRegistering] = useState(false);
 
   useEffect(() => {
     if (!activeOrg) {
@@ -53,7 +55,7 @@ export default function DashboardPage() {
       <div className="p-8">
         <div className="glass-strong gradient-border p-10 text-center max-w-md mx-auto animate-scale-in">
           <div className="flex justify-center mb-5">
-            <AnimatedLogo size={56} />
+            <AnimatedLogo size={72} />
           </div>
           <h2 className="font-display font-bold text-white text-lg mb-2">No organisation found</h2>
           <p className="text-sm text-slate-500 mb-6">
@@ -215,10 +217,32 @@ export default function DashboardPage() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-display font-semibold text-amber-300 mb-1">Register on Algorand</p>
-              <p className="text-xs text-slate-400">
-                Connect your Pera Wallet and register your organisation&apos;s DID on-chain to
-                start submitting compliance proofs.
+              <p className="text-xs text-slate-400 mb-4">
+                Register your organisation&apos;s DID on-chain to start submitting compliance proofs.
               </p>
+              <button
+                disabled={registering}
+                onClick={async () => {
+                  setRegistering(true);
+                  setError("");
+                  try {
+                    const addr = walletAddress || "DEPLOYER";
+                    const res = await orgApi.registerOnchain(activeOrg.id, addr);
+                    setActiveOrg(res.data);
+                  } catch (e: any) {
+                    setError(e?.response?.data?.detail || "On-chain registration failed");
+                  } finally {
+                    setRegistering(false);
+                  }
+                }}
+                className="btn-primary inline-flex items-center gap-2 text-sm"
+              >
+                {registering ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" />Registering on-chain...</>
+                ) : (
+                  <><Shield className="w-4 h-4" />Register on Algorand</>
+                )}
+              </button>
             </div>
           </div>
         </div>
