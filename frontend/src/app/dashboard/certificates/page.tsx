@@ -50,7 +50,7 @@ export default function CertificatesPage() {
   const proofsPendingCert = verifiedProofs.filter((p) => !issuedProofIds.has(p.id));
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in max-w-full overflow-hidden">
       <SectionHeader
         title="Compliance Certificates"
         desc="Verifiable on-chain certificates issued as Algorand Standard Assets."
@@ -64,7 +64,7 @@ export default function CertificatesPage() {
 
       {/* Eligible proofs for certification */}
       {proofsPendingCert.length > 0 && (
-        <div className="glass gradient-border p-5 mb-6 border-indigo-500/15">
+        <div className="glass gradient-border p-4 sm:p-5 mb-6 border-indigo-500/15">
           <p className="text-sm font-display font-semibold text-white mb-1">
             Ready to certify — {proofsPendingCert.length} verified proof{proofsPendingCert.length > 1 ? "s" : ""}
           </p>
@@ -75,7 +75,7 @@ export default function CertificatesPage() {
             {proofsPendingCert.map((p) => (
               <div
                 key={p.id}
-                className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all duration-500 ${justIssued === p.id
+                className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-3 sm:px-4 py-3 rounded-xl border transition-all duration-500 ${justIssued === p.id
                   ? "bg-emerald-500/[0.08] border-emerald-500/25 shadow-[0_0_20px_rgba(16,185,129,0.1)]"
                   : "bg-white/[0.02] border-white/[0.06]"
                   }`}
@@ -117,13 +117,13 @@ export default function CertificatesPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {certs.map((cert) => (
-            <div key={cert.id} className={`glass gradient-border hover-glow p-6 relative overflow-hidden ${cert.status === "compliant" || cert.status === "active" ? "confirm-wave" : ""}`}>
+            <div key={cert.id} className={`glass gradient-border hover-glow p-4 sm:p-6 relative overflow-hidden ${cert.status === "compliant" || cert.status === "active" ? "confirm-wave" : ""}`}>
               {/* Status glow indicator */}
               {(cert.status === "compliant" || cert.status === "active") && (
                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/[0.04] rounded-full blur-[40px] pointer-events-none" />
               )}
 
-              <div className="flex items-start justify-between relative">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 relative">
                 <div className="flex items-center gap-4">
                   {/* Certificate icon with glow */}
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/15 to-violet-500/10 border border-indigo-500/15 flex items-center justify-center flex-shrink-0 ${cert.status === "compliant" || cert.status === "active"
@@ -155,18 +155,18 @@ export default function CertificatesPage() {
 
                 {cert.txn_id && (
                   <a
-                    href={`https://testnet.algoexplorer.io/tx/${cert.txn_id}`}
+                    href={`https://lora.algokit.io/testnet/transaction/${cert.txn_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 border border-white/[0.08] hover:border-indigo-500/25 text-slate-400 hover:text-indigo-400 rounded-xl text-xs transition-all duration-200 hover:shadow-[0_0_10px_rgba(99,102,241,0.08)]"
                   >
                     <ExternalLink className="w-3 h-3" />
-                    View on Algorand
+                    View on Lora
                   </a>
                 )}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <p className="text-xs text-slate-500 mb-0.5">Proof ID</p>
                   <p className="text-xs text-slate-400">#{cert.proof_id}</p>
