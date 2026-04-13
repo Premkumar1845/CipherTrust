@@ -62,7 +62,7 @@ class AlgorandClient:
         params = self.get_params()
         note = json.dumps({"app": label, "hash": data_hash}).encode()
 
-        txn = transaction.PaymentTransaction(
+        txn = transaction.PaymentTxn(
             sender=self.deployer_address,
             receiver=self.deployer_address,
             amt=0,
@@ -91,7 +91,7 @@ class AlgorandClient:
         sender = account.address_from_private_key(pk)
         params = self.get_params()
 
-        txn = transaction.ApplicationCallTransaction(
+        txn = transaction.ApplicationCallTxn(
             sender=sender,
             sp=params,
             index=app_id,
