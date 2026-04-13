@@ -1,14 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, BarChart, Bar
-} from "recharts";
+import dynamic from "next/dynamic";
 import { AlertTriangle, AlertCircle, Info, TrendingUp } from "lucide-react";
 import { analyticsApi } from "@/lib/api";
 import { useStore } from "@/lib/store";
 import { StatCard, SectionHeader } from "@/components/ui/Cards";
+
+const RechartsLineChart = dynamic(() => import("recharts").then((m) => m.LineChart), { ssr: false });
+const RechartsBarChart = dynamic(() => import("recharts").then((m) => m.BarChart), { ssr: false });
+const ResponsiveContainer = dynamic(() => import("recharts").then((m) => m.ResponsiveContainer), { ssr: false });
+const Line = dynamic(() => import("recharts").then((m) => m.Line), { ssr: false }) as any;
+const Bar = dynamic(() => import("recharts").then((m) => m.Bar), { ssr: false }) as any;
+const XAxis = dynamic(() => import("recharts").then((m) => m.XAxis), { ssr: false }) as any;
+const YAxis = dynamic(() => import("recharts").then((m) => m.YAxis), { ssr: false }) as any;
+const CartesianGrid = dynamic(() => import("recharts").then((m) => m.CartesianGrid), { ssr: false }) as any;
+const Tooltip = dynamic(() => import("recharts").then((m) => m.Tooltip), { ssr: false }) as any;
 
 const RISK_ICON: Record<string, React.ReactNode> = {
   high: <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />,
@@ -47,7 +54,7 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[400px]">
+      <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex items-center justify-center min-h-[400px]">
         <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full crypto-loader" />
       </div>
     );
@@ -55,7 +62,7 @@ export default function AnalyticsPage() {
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <p className="text-red-400 text-sm rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3">{error}</p>
       </div>
     );
@@ -71,14 +78,14 @@ export default function AnalyticsPage() {
   const lowFlags = riskFlags.filter((f) => f.level === "low");
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in max-w-full overflow-hidden">
       <SectionHeader
         title="Compliance Analytics"
         desc="Score breakdown, risk flags, and 30-day activity trend."
       />
 
       {/* Score + grade */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="glass gradient-border p-5 md:col-span-1 flex flex-col items-center justify-center text-center crypto-pulse">
           <p className="text-xs text-slate-400 mb-1 font-display">Compliance grade</p>
           <p className={`text-6xl font-bold font-display ${GRADE_COLOR[grade]}`}>{grade}</p>
@@ -102,7 +109,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Score gauge bar */}
-      <div className="glass gradient-border p-5 mb-8">
+      <div className="glass gradient-border p-4 sm:p-5 mb-8">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs text-slate-400 font-display">Compliance score</p>
           <p className="text-sm font-bold font-display text-white">{score} / 100</p>
@@ -159,12 +166,12 @@ export default function AnalyticsPage() {
 
       {/* Trend charts */}
       {trend.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Consent trend */}
           <div className="glass gradient-border p-5">
             <p className="text-xs text-slate-400 mb-4 font-display font-semibold">Consent records — 30 days</p>
             <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={trend} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
+              <RechartsBarChart data={trend} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
                 <XAxis
                   dataKey="date"
@@ -192,7 +199,7 @@ export default function AnalyticsPage() {
                   cursor={{ fill: "rgba(99,102,241,0.05)" }}
                 />
                 <Bar dataKey="consents" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              </BarChart>
+              </RechartsBarChart>
             </ResponsiveContainer>
           </div>
 
@@ -200,7 +207,7 @@ export default function AnalyticsPage() {
           <div className="glass gradient-border p-5">
             <p className="text-xs text-slate-400 mb-4 font-display font-semibold">ZK proofs generated — 30 days</p>
             <ResponsiveContainer width="100%" height={160}>
-              <LineChart data={trend} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
+              <RechartsLineChart data={trend} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
                 <XAxis
                   dataKey="date"
@@ -234,7 +241,7 @@ export default function AnalyticsPage() {
                   dot={false}
                   activeDot={{ r: 4, fill: "#10b981" }}
                 />
-              </LineChart>
+              </RechartsLineChart>
             </ResponsiveContainer>
           </div>
         </div>
