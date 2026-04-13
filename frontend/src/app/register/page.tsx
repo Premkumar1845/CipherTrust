@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Eye, EyeOff, ArrowRight, Check } from "lucide-react";
 import { authApi, orgApi } from "@/lib/api";
 import { useStore } from "@/lib/store";
-import { NetworkBackground } from "@/components/ui/NetworkBackground";
-import { AnimatedLogo } from "@/components/ui/AnimatedLogo";
+
+const NetworkBackground = dynamic(() => import("@/components/ui/NetworkBackground").then((m) => m.NetworkBackground), { ssr: false });
+const AnimatedLogo = dynamic(() => import("@/components/ui/AnimatedLogo").then((m) => m.AnimatedLogo), { ssr: false });
 
 type Step = "account" | "org";
 
@@ -64,7 +66,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative">
-      <NetworkBackground nodeCount={35} className="fixed inset-0 z-0" />
+      <NetworkBackground nodeCount={20} className="fixed inset-0 z-0" />
       <div className="fixed inset-0 pointer-events-none z-[1]">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/[0.06] rounded-full blur-[120px]" />
         <div className="absolute top-0 right-0 w-[400px] h-[300px] bg-violet-600/[0.04] rounded-full blur-[80px]" />
@@ -84,10 +86,10 @@ export default function RegisterPage() {
             return (
               <div key={s} className="flex items-center gap-2.5 flex-1">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-mono border transition-all duration-300 ${isComplete
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.1)]"
-                    : isActive
-                      ? "border-indigo-500/30 bg-indigo-500/15 text-indigo-300 shadow-[0_0_8px_rgba(99,102,241,0.1)]"
-                      : "border-white/[0.06] text-slate-600"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.1)]"
+                  : isActive
+                    ? "border-indigo-500/30 bg-indigo-500/15 text-indigo-300 shadow-[0_0_8px_rgba(99,102,241,0.1)]"
+                    : "border-white/[0.06] text-slate-600"
                   }`}>
                   {isComplete ? <Check className="w-3.5 h-3.5" /> : i + 1}
                 </div>
