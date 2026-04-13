@@ -17,33 +17,6 @@
 
 </div>
 
----
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Problem Statement](#problem-statement)
-- [Solution](#solution)
-- [Key Features](#key-features)
-- [System Architecture](#system-architecture)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Quick Start](#quick-start)
-- [API Reference](#api-reference)
-- [ZK Circuit Design](#zk-circuit-design)
-- [Smart Contracts](#smart-contracts)
-- [Frontend Design](#frontend-design)
-- [Security Model](#security-model)
-- [Development](#development)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Use Cases](#use-cases)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
 ## Overview
 
 CipherTrust is a full-stack, privacy-preserving regulatory compliance platform built on **Algorand**. It enables organisations to prove compliance with India's **Digital Personal Data Protection Act (DPDPA, 2023)** without ever revealing personal user data to regulators or auditors.
