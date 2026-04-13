@@ -66,6 +66,7 @@ class User(Base):
     full_name = Column(String(255), nullable=False)
     role = Column(Enum(UserRole), default=UserRole.ORG_ADMIN, nullable=False)
     is_active = Column(Boolean, default=True)
+    supabase_uid = Column(String(255), unique=True, nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=utcnow)
     updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
