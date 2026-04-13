@@ -1,19 +1,22 @@
 """
 CipherTrust — Consent Routes
 """
+import asyncio
 import hashlib
 import json
 from datetime import datetime, timezone
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.blockchain.algorand_client import algorand
-from app.core.database import get_db
+from app.core.database import get_db, AsyncSessionLocal
 from app.models.user import ConsentRecord, Organization
 from app.schemas.schemas import ConsentCreateRequest, ConsentResponse
 
+log = structlog.get_logger()
 router = APIRouter()
 
 
@@ -55,8 +58,36 @@ async def create_consent(
 
     # Compute consent hash
     consent.consent_hash = _hash_consent(org_id, user_hash, payload.consent_type, granted_at)
+
     await db.flush()
     await db.refresh(consent)
+    consent_id = consent.id
+    consent_hash = consent.consent_hash
+    consent_type = payload.consent_type
+
+    # Fire-and-forget blockchain anchor (4s+ Algorand round-trip runs in background)
+    async def _anchor_in_background():
+        try:
+            txn_id = algorand.anchor_consent_with_payment(
+                consent_hash=consent_hash,
+                org_id=org_id,
+                consent_type=consent_type,
+            )
+            async with AsyncSessionLocal() as sess:
+                result = await sess.execute(
+                    select(ConsentRecord).where(ConsentRecord.id == consent_id)
+                )
+                rec = result.scalar_one_or_none()
+                if rec:
+                    rec.txn_id = txn_id
+                    rec.is_anchored = True
+                    await sess.commit()
+            log.info("consent_anchored", consent_id=consent_id, txn_id=txn_id)
+        except Exception as e:
+            log.warning("consent_anchor_failed", consent_id=consent_id, error=str(e))
+
+    asyncio.create_task(_anchor_in_background())
+
     return consent
 
 
