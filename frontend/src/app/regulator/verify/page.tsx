@@ -49,7 +49,7 @@ function VerifyContent() {
   };
 
   return (
-    <div className="p-8 animate-fade-in max-w-2xl">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in max-w-2xl">
       <div className="mb-8">
         <h1 className="text-2xl font-display font-bold text-white mb-1">Verify Compliance</h1>
         <p className="text-sm text-slate-400">
@@ -174,7 +174,7 @@ function VerifyContent() {
                 </div>
                 {orgSummary.latest_certificate.txn_id && (
                   <a
-                    href={`https://testnet.algoexplorer.io/tx/${orgSummary.latest_certificate.txn_id}`}
+                    href={`https://lora.algokit.io/testnet/transaction/${orgSummary.latest_certificate.txn_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300"
