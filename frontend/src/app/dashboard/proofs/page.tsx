@@ -102,14 +102,14 @@ export default function ProofsPage() {
   };
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in max-w-full overflow-hidden">
       <SectionHeader
         title="ZK Proofs"
         desc="Generate cryptographic proofs of consent compliance and submit to Algorand."
         action={
           <button
             onClick={() => setShowGen(!showGen)}
-            className="btn-primary flex items-center gap-2"
+            className="btn-primary flex items-center gap-2 text-xs sm:text-sm whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             Generate proof
@@ -125,7 +125,7 @@ export default function ProofsPage() {
 
       {/* Generate panel */}
       {showGen && (
-        <div className="glass gradient-border p-6 mb-6 animate-slide-up relative overflow-hidden">
+        <div className="glass gradient-border p-4 sm:p-6 mb-6 animate-slide-up relative overflow-hidden">
           {/* Neon scan line during generation */}
           {generating && <div className="neon-scan absolute inset-0 pointer-events-none" />}
 
@@ -228,8 +228,8 @@ export default function ProofsPage() {
       ) : (
         <div className="space-y-3">
           {proofs.map((p, idx) => (
-            <div key={p.id} className="glass gradient-border hover-glow p-5">
-              <div className="flex items-start justify-between">
+            <div key={p.id} className="glass gradient-border hover-glow p-4 sm:p-5">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm font-medium text-white">
@@ -244,7 +244,7 @@ export default function ProofsPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-3">
                     <div>
                       <p className="text-xs text-slate-500 mb-0.5">Proof hash</p>
                       <HashScramble hash={p.proof_hash || ""} active={idx === 0} />
@@ -261,7 +261,7 @@ export default function ProofsPage() {
                       <div>
                         <p className="text-xs text-slate-500 mb-0.5">Transaction</p>
                         <a
-                          href={`https://testnet.algoexplorer.io/tx/${p.txn_id}`}
+                          href={`https://lora.algokit.io/testnet/transaction/${p.txn_id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300"
@@ -284,11 +284,24 @@ export default function ProofsPage() {
                   <button
                     onClick={() => handleSubmit(p.id)}
                     disabled={submitting === p.id}
-                    className="flex items-center gap-2 px-3 py-2 bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs transition-all duration-200 ml-4 flex-shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.05)] hover:shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                    className="flex items-center gap-2 px-3 py-2 bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs transition-all duration-200 flex-shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.05)] hover:shadow-[0_0_15px_rgba(16,185,129,0.1)] w-full sm:w-auto justify-center sm:justify-start"
                   >
                     <Send className="w-3.5 h-3.5" />
                     {submitting === p.id ? "Submitting..." : "Submit on-chain"}
                   </button>
+                )}
+
+                {/* View on Lora for verified/submitted proofs */}
+                {p.txn_id && (p.status === "verified" || p.status === "submitted") && (
+                  <a
+                    href={`https://lora.algokit.io/testnet/transaction/${p.txn_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-2 border border-indigo-500/20 hover:border-indigo-500/40 text-indigo-400 hover:text-indigo-300 rounded-xl text-xs transition-all duration-200 flex-shrink-0 hover:shadow-[0_0_10px_rgba(99,102,241,0.1)] w-full sm:w-auto justify-center sm:justify-start"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    View on Lora
+                  </a>
                 )}
               </div>
 
@@ -296,7 +309,7 @@ export default function ProofsPage() {
               {p.public_inputs && p.status === "verified" && (
                 <div className="mt-4 pt-4 border-t border-white/[0.06]">
                   <p className="text-xs text-slate-500 mb-2">Public inputs (visible to regulator)</p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {Object.entries(p.public_inputs).map(([k, v]) => (
                       <div key={k}>
                         <p className="text-xs text-slate-600">{k}</p>
