@@ -113,7 +113,7 @@ export function SectionHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between mb-8">
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 sm:mb-8">
       <div>
         <h2 className="font-display font-bold text-lg text-white tracking-tight">{title}</h2>
         {desc && <p className="text-sm text-slate-500 mt-1">{desc}</p>}
