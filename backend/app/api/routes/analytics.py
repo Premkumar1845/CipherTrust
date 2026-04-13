@@ -43,24 +43,8 @@ async def get_trend(
 
 @router.get("/{org_id}/dashboard")
 async def get_dashboard(org_id: int, db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
-    """Combined analytics snapshot — score + flags + 30-day trend."""
-    score, flags, trend = await _gather(org_id, db)
-    return {
-        "org_id": org_id,
-        "score": score,
-        "grade": _grade(score),
-        "risk_flags": flags,
-        "trend": trend,
-    }
-
-
-async def _gather(org_id: int, db: AsyncSession):
-    import asyncio
-    return await asyncio.gather(
-        analytics_service.calculate_score(org_id, db),
-        analytics_service.get_risk_flags(org_id, db),
-        analytics_service.get_activity_trend(org_id, db, 30),
-    )
+    """Combined analytics snapshot — score + flags + 30-day trend (cached)."""
+    return await analytics_service.get_dashboard(org_id, db)
 
 
 def _grade(score: float) -> str:
