@@ -21,6 +21,7 @@ api.interceptors.request.use((config) => {
 export const authApi = {
   register: (data: { email: string; password: string; full_name: string; role?: string }) =>
     api.post("/auth/register", data),
+
   login: (email: string, password: string) =>
     api.post("/auth/login", { email, password }),
 };
@@ -66,9 +67,9 @@ export const proofApi = {
 // ─── Analytics ────────────────────────────────────────────────────────────────
 
 export const analyticsApi = {
-  score:     (orgId: number) => api.get(`/analytics/${orgId}/score`),
+  score: (orgId: number) => api.get(`/analytics/${orgId}/score`),
   riskFlags: (orgId: number) => api.get(`/analytics/${orgId}/risk-flags`),
-  trend:     (orgId: number, days = 30) => api.get(`/analytics/${orgId}/trend?days=${days}`),
+  trend: (orgId: number, days = 30) => api.get(`/analytics/${orgId}/trend?days=${days}`),
   dashboard: (orgId: number) => api.get(`/analytics/${orgId}/dashboard`),
 };
 
