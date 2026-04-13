@@ -35,7 +35,7 @@ export default function RegulatorPage() {
   const total = orgs.length;
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in max-w-full overflow-hidden">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -50,7 +50,7 @@ export default function RegulatorPage() {
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Total organisations" value={total} icon={<Activity className="w-5 h-5 text-indigo-400" />} />
         <StatCard label="Compliant" value={compliant} accent="emerald" icon={<CheckCircle2 className="w-5 h-5 text-emerald-400" />} />
         <StatCard label="Non-compliant" value={total - compliant} accent="red" icon={<XCircle className="w-5 h-5 text-red-400" />} />
@@ -76,8 +76,8 @@ export default function RegulatorPage() {
       ) : (
         <div className="space-y-3">
           {orgs.map(({ org, summary }) => (
-            <div key={org.id} className={`glass gradient-border hover-glow p-5 ${summary?.is_compliant ? "confirm-wave" : ""}`}>
-              <div className="flex items-center justify-between">
+            <div key={org.id} className={`glass gradient-border hover-glow p-4 sm:p-5 ${summary?.is_compliant ? "confirm-wave" : ""}`}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-4">
                   {/* Compliance indicator with glow */}
                   <div className="flex-shrink-0">
@@ -108,7 +108,7 @@ export default function RegulatorPage() {
                 </div>
 
                 {/* Score and actions */}
-                <div className="flex items-center gap-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                   {summary && (
                     <div className="grid grid-cols-3 gap-6 text-center">
                       <div>
@@ -143,7 +143,7 @@ export default function RegulatorPage() {
 
               {/* Certificate strip */}
               {summary?.latest_certificate && (
-                <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between">
+                <div className="mt-4 pt-4 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     <Shield className="w-3.5 h-3.5 text-indigo-400" />
                     <span className="text-slate-400">
@@ -164,7 +164,7 @@ export default function RegulatorPage() {
                   </div>
                   {summary.latest_certificate.txn_id && (
                     <a
-                      href={`https://testnet.algoexplorer.io/tx/${summary.latest_certificate.txn_id}`}
+                      href={`https://lora.algokit.io/testnet/transaction/${summary.latest_certificate.txn_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-mono rounded-xl bg-white/[0.02] px-2.5 py-1 border border-white/[0.06] hover:border-indigo-500/30"
