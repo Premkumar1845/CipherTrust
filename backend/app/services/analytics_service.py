@@ -9,157 +9,155 @@ Calculates:
   - 30-day activity trend
 """
 
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import case, cast, Date, func, literal_column, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import (
     ComplianceCertificate, ConsentRecord,
     Organization, ZKProof,
 )
+from app.core.redis import get_redis
+
+CACHE_TTL = 45  # seconds
 
 
 class ComplianceAnalyticsService:
 
     # ── Score weights ──────────────────────────────────────────────────────────
-    WEIGHT_ACTIVE_CONSENTS  = 25   # up to 25 pts for having active consents
-    WEIGHT_ANCHORED         = 20   # up to 20 pts for on-chain anchoring
-    WEIGHT_VERIFIED_PROOFS  = 30   # up to 30 pts for verified ZK proofs
-    WEIGHT_CERTIFICATE      = 15   # up to 15 pts for active certificate
-    WEIGHT_FRESHNESS        = 10   # up to 10 pts for proof recency
+    WEIGHT_ACTIVE_CONSENTS  = 25
+    WEIGHT_ANCHORED         = 20
+    WEIGHT_VERIFIED_PROOFS  = 30
+    WEIGHT_CERTIFICATE      = 15
+    WEIGHT_FRESHNESS        = 10
 
-    async def calculate_score(self, org_id: int, db: AsyncSession) -> float:
-        """Compute a 0–100 compliance score for an organisation."""
-        score = 0.0
+    # ── Internal: fetch all counts in ONE query ──────────────────────────────
+    async def _fetch_score_data(self, org_id: int, db: AsyncSession, now: datetime) -> dict:
+        """Single query to get all counts needed for score + risk flags."""
+        row = (await db.execute(
+            select(
+                # active consents
+                func.count().filter(
+                    ConsentRecord.organization_id == org_id,
+                    ConsentRecord.status == "active",
+                ).label("active_consents"),
+                # anchored consents
+                func.count().filter(
+                    ConsentRecord.organization_id == org_id,
+                    ConsentRecord.is_anchored == True,
+                ).label("anchored_consents"),
+                # expired (still marked active but past expiry)
+                func.count().filter(
+                    ConsentRecord.organization_id == org_id,
+                    ConsentRecord.status == "active",
+                    ConsentRecord.expires_at < now,
+                ).label("expired_consents"),
+                # unanchored active
+                func.count().filter(
+                    ConsentRecord.organization_id == org_id,
+                    ConsentRecord.status == "active",
+                    ConsentRecord.is_anchored == False,
+                ).label("unanchored_consents"),
+            ).select_from(ConsentRecord)
+        )).one()
 
-        # 1. Active consents (up to 25 pts — 5 pts each, max 5 consents)
-        active = await db.scalar(
-            select(func.count()).where(
-                ConsentRecord.organization_id == org_id,
-                ConsentRecord.status == "active",
-            )
-        ) or 0
-        score += min(active, 5) * 5.0
+        proof_row = (await db.execute(
+            select(
+                func.count().filter(
+                    ZKProof.organization_id == org_id,
+                    ZKProof.status == "verified",
+                ).label("verified_proofs"),
+                func.max(
+                    case(
+                        (ZKProof.status == "verified", ZKProof.verified_at),
+                    )
+                ).label("latest_proof_date"),
+            ).select_from(ZKProof)
+        )).one()
 
-        # 2. On-chain anchored consents (up to 20 pts)
-        anchored = await db.scalar(
-            select(func.count()).where(
-                ConsentRecord.organization_id == org_id,
-                ConsentRecord.is_anchored == True,
-            )
-        ) or 0
-        if active > 0:
-            score += (anchored / active) * self.WEIGHT_ANCHORED
-
-        # 3. Verified ZK proofs (up to 30 pts — 10 pts each, max 3)
-        verified = await db.scalar(
-            select(func.count()).where(
-                ZKProof.organization_id == org_id,
-                ZKProof.status == "verified",
-            )
-        ) or 0
-        score += min(verified, 3) * 10.0
-
-        # 4. Active compliance certificate (15 pts)
-        now = datetime.now(timezone.utc)
-        cert = await db.scalar(
+        cert_count = await db.scalar(
             select(func.count()).where(
                 ComplianceCertificate.organization_id == org_id,
                 ComplianceCertificate.status == "compliant",
                 ComplianceCertificate.expires_at > now,
             )
         ) or 0
-        if cert > 0:
+
+        return {
+            "active": row.active_consents or 0,
+            "anchored": row.anchored_consents or 0,
+            "expired": row.expired_consents or 0,
+            "unanchored": row.unanchored_consents or 0,
+            "verified": proof_row.verified_proofs or 0,
+            "latest_proof_date": proof_row.latest_proof_date,
+            "active_cert": cert_count,
+        }
+
+    async def calculate_score(self, org_id: int, db: AsyncSession, data: Optional[dict] = None) -> float:
+        """Compute a 0–100 compliance score for an organisation."""
+        now = datetime.now(timezone.utc)
+        if data is None:
+            data = await self._fetch_score_data(org_id, db, now)
+
+        score = 0.0
+        active = data["active"]
+        score += min(active, 5) * 5.0
+
+        if active > 0:
+            score += (data["anchored"] / active) * self.WEIGHT_ANCHORED
+
+        score += min(data["verified"], 3) * 10.0
+
+        if data["active_cert"] > 0:
             score += self.WEIGHT_CERTIFICATE
 
-        # 5. Proof freshness (up to 10 pts — full points if proof within 30 days)
-        latest_proof = await db.scalar(
-            select(func.max(ZKProof.verified_at)).where(
-                ZKProof.organization_id == org_id,
-                ZKProof.status == "verified",
-            )
-        )
+        latest_proof = data["latest_proof_date"]
         if latest_proof:
             days_since = (now - latest_proof).days
-            freshness_score = max(0, 1 - (days_since / 90)) * self.WEIGHT_FRESHNESS
-            score += freshness_score
+            score += max(0, 1 - (days_since / 90)) * self.WEIGHT_FRESHNESS
 
         return round(min(score, 100.0), 1)
 
-    async def get_risk_flags(self, org_id: int, db: AsyncSession) -> List[Dict[str, str]]:
+    async def get_risk_flags(self, org_id: int, db: AsyncSession, data: Optional[dict] = None) -> List[Dict[str, str]]:
         """Return a list of active compliance risk flags."""
-        flags = []
         now = datetime.now(timezone.utc)
+        if data is None:
+            data = await self._fetch_score_data(org_id, db, now)
 
-        # Expired consents that haven't been renewed
-        expired_count = await db.scalar(
-            select(func.count()).where(
-                ConsentRecord.organization_id == org_id,
-                ConsentRecord.expires_at < now,
-                ConsentRecord.status == "active",
-            )
-        ) or 0
-        if expired_count > 0:
+        flags: List[Dict[str, str]] = []
+
+        if data["expired"] > 0:
             flags.append({
                 "level": "high",
                 "code": "EXPIRED_CONSENTS",
-                "message": f"{expired_count} consent record(s) have expired and need renewal.",
+                "message": f"{data['expired']} consent record(s) have expired and need renewal.",
             })
 
-        # No verified proofs at all
-        verified = await db.scalar(
-            select(func.count()).where(
-                ZKProof.organization_id == org_id,
-                ZKProof.status == "verified",
-            )
-        ) or 0
-        if verified == 0:
+        if data["verified"] == 0:
             flags.append({
                 "level": "high",
                 "code": "NO_VERIFIED_PROOFS",
                 "message": "No verified ZK proofs found. Submit a compliance proof to proceed.",
             })
 
-        # Stale proof (last verified > 90 days ago)
-        latest_proof_date = await db.scalar(
-            select(func.max(ZKProof.verified_at)).where(
-                ZKProof.organization_id == org_id,
-                ZKProof.status == "verified",
-            )
-        )
-        if latest_proof_date and (now - latest_proof_date).days > 90:
+        if data["latest_proof_date"] and (now - data["latest_proof_date"]).days > 90:
             flags.append({
                 "level": "medium",
                 "code": "STALE_PROOF",
                 "message": "Last verified proof is over 90 days old. Consider re-submitting.",
             })
 
-        # Unanchored consents
-        unanchored = await db.scalar(
-            select(func.count()).where(
-                ConsentRecord.organization_id == org_id,
-                ConsentRecord.status == "active",
-                ConsentRecord.is_anchored == False,
-            )
-        ) or 0
-        if unanchored > 0:
+        if data["unanchored"] > 0:
             flags.append({
                 "level": "low",
                 "code": "UNANCHORED_CONSENTS",
-                "message": f"{unanchored} consent(s) not yet anchored on Algorand.",
+                "message": f"{data['unanchored']} consent(s) not yet anchored on Algorand.",
             })
 
-        # No active certificate
-        active_cert = await db.scalar(
-            select(func.count()).where(
-                ComplianceCertificate.organization_id == org_id,
-                ComplianceCertificate.status == "compliant",
-                ComplianceCertificate.expires_at > now,
-            )
-        ) or 0
-        if active_cert == 0 and verified > 0:
+        if data["active_cert"] == 0 and data["verified"] > 0:
             flags.append({
                 "level": "medium",
                 "code": "NO_CERTIFICATE",
@@ -171,39 +169,88 @@ class ComplianceAnalyticsService:
     async def get_activity_trend(
         self, org_id: int, db: AsyncSession, days: int = 30
     ) -> List[Dict[str, Any]]:
-        """Return daily activity counts for the last N days."""
+        """Return daily activity counts for the last N days (2 queries instead of 60)."""
         now = datetime.now(timezone.utc)
-        trend = []
+        start = (now - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
 
-        for i in range(days - 1, -1, -1):
-            day_start = (now - timedelta(days=i)).replace(
-                hour=0, minute=0, second=0, microsecond=0
+        # Single query per table, grouped by day
+        consent_rows = (await db.execute(
+            select(
+                cast(ConsentRecord.created_at, Date).label("day"),
+                func.count().label("cnt"),
             )
-            day_end = day_start + timedelta(days=1)
+            .where(
+                ConsentRecord.organization_id == org_id,
+                ConsentRecord.created_at >= start,
+            )
+            .group_by(cast(ConsentRecord.created_at, Date))
+        )).all()
 
-            consents_that_day = await db.scalar(
-                select(func.count()).where(
-                    ConsentRecord.organization_id == org_id,
-                    ConsentRecord.created_at >= day_start,
-                    ConsentRecord.created_at < day_end,
-                )
-            ) or 0
+        proof_rows = (await db.execute(
+            select(
+                cast(ZKProof.created_at, Date).label("day"),
+                func.count().label("cnt"),
+            )
+            .where(
+                ZKProof.organization_id == org_id,
+                ZKProof.created_at >= start,
+            )
+            .group_by(cast(ZKProof.created_at, Date))
+        )).all()
 
-            proofs_that_day = await db.scalar(
-                select(func.count()).where(
-                    ZKProof.organization_id == org_id,
-                    ZKProof.created_at >= day_start,
-                    ZKProof.created_at < day_end,
-                )
-            ) or 0
+        consent_map = {row.day: row.cnt for row in consent_rows}
+        proof_map = {row.day: row.cnt for row in proof_rows}
 
+        trend = []
+        for i in range(days - 1, -1, -1):
+            d = (now - timedelta(days=i)).date()
             trend.append({
-                "date": day_start.strftime("%Y-%m-%d"),
-                "consents": consents_that_day,
-                "proofs": proofs_that_day,
+                "date": d.isoformat(),
+                "consents": consent_map.get(d, 0),
+                "proofs": proof_map.get(d, 0),
             })
-
         return trend
+
+    # ── Cached dashboard endpoint ────────────────────────────────────────────
+    async def get_dashboard(self, org_id: int, db: AsyncSession) -> Dict[str, Any]:
+        """Score + flags + trend with Redis cache."""
+        cache_key = f"analytics:dashboard:{org_id}"
+        try:
+            r = get_redis()
+            cached = await r.get(cache_key)
+            if cached:
+                return json.loads(cached)
+        except Exception:
+            pass  # Redis down — fall through
+
+        now = datetime.now(timezone.utc)
+        data = await self._fetch_score_data(org_id, db, now)
+        score = await self.calculate_score(org_id, db, data)
+        flags = await self.get_risk_flags(org_id, db, data)
+        trend = await self.get_activity_trend(org_id, db, 30)
+
+        result = {
+            "org_id": org_id,
+            "score": score,
+            "grade": _grade(score),
+            "risk_flags": flags,
+            "trend": trend,
+        }
+
+        try:
+            await r.setex(cache_key, CACHE_TTL, json.dumps(result, default=str))
+        except Exception:
+            pass
+
+        return result
+
+
+def _grade(score: float) -> str:
+    if score >= 90: return "A"
+    if score >= 75: return "B"
+    if score >= 60: return "C"
+    if score >= 40: return "D"
+    return "F"
 
 
 analytics_service = ComplianceAnalyticsService()
