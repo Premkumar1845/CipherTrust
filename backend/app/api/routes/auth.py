@@ -11,12 +11,16 @@ from app.core.security import (
     create_access_token, get_current_user,
 )
 from app.models.user import User
-from app.schemas.schemas import UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse
+from app.schemas.schemas import (
+    UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse,
+)
 
 router = APIRouter()
 
 
-@router.post("/register", response_model=UserResponse, status_code=201)
+# ─── Register ──────────────────────────────────────────────────────────────────
+
+@router.post("/register", response_model=TokenResponse, status_code=201)
 async def register(payload: UserRegisterRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == payload.email))
     if result.scalar_one_or_none():
@@ -31,8 +35,12 @@ async def register(payload: UserRegisterRequest, db: AsyncSession = Depends(get_
     db.add(user)
     await db.flush()
     await db.refresh(user)
-    return user
 
+    token = create_access_token({"sub": str(user.id), "role": user.role})
+    return TokenResponse(access_token=token, user_id=user.id, role=user.role)
+
+
+# ─── Login ─────────────────────────────────────────────────────────────────────
 
 @router.post("/login", response_model=TokenResponse)
 async def login(payload: UserLoginRequest, db: AsyncSession = Depends(get_db)):
@@ -48,12 +56,10 @@ async def login(payload: UserLoginRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=403, detail="Account is inactive")
 
     token = create_access_token({"sub": str(user.id), "role": user.role})
-    return TokenResponse(
-        access_token=token,
-        user_id=user.id,
-        role=user.role,
-    )
+    return TokenResponse(access_token=token, user_id=user.id, role=user.role)
 
+
+# ─── Profile ──────────────────────────────────────────────────────────────────
 
 @router.get("/me", response_model=UserResponse)
 async def me(current_user: User = Depends(get_current_user)):
