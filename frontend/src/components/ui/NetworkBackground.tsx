@@ -11,10 +11,11 @@ interface Node {
     opacity: number;
 }
 
-export function NetworkBackground({ nodeCount = 50, className = "" }: { nodeCount?: number; className?: string }) {
+export function NetworkBackground({ nodeCount = 30, className = "" }: { nodeCount?: number; className?: string }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const nodesRef = useRef<Node[]>([]);
     const animRef = useRef<number>(0);
+    const lastFrameRef = useRef<number>(0);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -35,15 +36,22 @@ export function NetworkBackground({ nodeCount = 50, className = "" }: { nodeCoun
         nodesRef.current = Array.from({ length: nodeCount }, () => ({
             x: Math.random() * w,
             y: Math.random() * h,
-            vx: (Math.random() - 0.5) * 0.3,
-            vy: (Math.random() - 0.5) * 0.3,
+            vx: (Math.random() - 0.5) * 0.25,
+            vy: (Math.random() - 0.5) * 0.25,
             radius: Math.random() * 1.5 + 0.5,
             opacity: Math.random() * 0.5 + 0.1,
         }));
 
-        const maxDist = 150;
+        const maxDist = 120;
+        const frameInterval = 1000 / 30; // 30 fps cap
 
-        const draw = () => {
+        const draw = (timestamp: number) => {
+            animRef.current = requestAnimationFrame(draw);
+
+            const elapsed = timestamp - lastFrameRef.current;
+            if (elapsed < frameInterval) return;
+            lastFrameRef.current = timestamp - (elapsed % frameInterval);
+
             const cw = canvas.offsetWidth;
             const ch = canvas.offsetHeight;
             ctx.clearRect(0, 0, cw, ch);
@@ -84,18 +92,10 @@ export function NetworkBackground({ nodeCount = 50, className = "" }: { nodeCoun
                 ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
                 ctx.fillStyle = `rgba(99, 102, 241, ${n.opacity})`;
                 ctx.fill();
-
-                // Glow effect
-                ctx.beginPath();
-                ctx.arc(n.x, n.y, n.radius * 3, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(99, 102, 241, ${n.opacity * 0.1})`;
-                ctx.fill();
             }
-
-            animRef.current = requestAnimationFrame(draw);
         };
 
-        draw();
+        draw(0);
 
         const handleResize = () => {
             canvas.width = canvas.offsetWidth * window.devicePixelRatio;
