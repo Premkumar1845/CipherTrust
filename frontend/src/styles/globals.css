@@ -341,6 +341,7 @@ body {
   border-radius: inherit;
   border: 2px solid rgba(16, 185, 129, 0.5);
   animation: confirmWave 1.5s ease-out forwards;
+  pointer-events: none;
 }
 
 /* ─── Neon line scan ────────────────────────────────────────────────────── */
