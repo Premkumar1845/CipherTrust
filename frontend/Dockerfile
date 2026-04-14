@@ -8,6 +8,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# Re-enable standalone for Docker (Vercel ignores this file)
+RUN sed -i 's/reactStrictMode: true,/reactStrictMode: true, output: "standalone",/' next.config.js
 RUN npm run build
 
 FROM node:22-alpine AS runner
