@@ -4,17 +4,19 @@ CipherTrust — Consent Routes
 import hashlib
 import json
 from datetime import datetime, timezone
+from typing import Optional
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.blockchain.algorand_client import algorand
 from app.core.database import get_db
-from app.models.user import ConsentRecord, Organization
-from app.schemas.schemas import ConsentCreateRequest, ConsentResponse
+from app.models.user import ConsentRecord, Organization, ZKProof
+from app.schemas.schemas import ConsentResponse
+from app.services.zk_service import zk_service
 
 log = structlog.get_logger()
 router = APIRouter()
@@ -33,7 +35,11 @@ def _hash_consent(org_id: int, user_hash: str, consent_type: str, granted_at: da
 @router.post("/{org_id}/records", response_model=ConsentResponse, status_code=201)
 async def create_consent(
     org_id: int,
-    payload: ConsentCreateRequest,
+    user_identifier: str = Form(...),
+    consent_type: str = Form(...),
+    purpose: str = Form(...),
+    expires_at: Optional[str] = Form(None),
+    document: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Organization).where(Organization.id == org_id))
@@ -41,23 +47,44 @@ async def create_consent(
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
 
+    if len(purpose) < 10:
+        raise HTTPException(status_code=422, detail="Purpose must be at least 10 characters")
+
     # Hash the user identifier — PII never stored in plaintext
-    user_hash = hashlib.sha256(f"{org_id}:{payload.user_identifier}".encode()).hexdigest()
+    user_hash = hashlib.sha256(f"{org_id}:{user_identifier}".encode()).hexdigest()
     granted_at = datetime.now(timezone.utc)
+
+    # Parse optional expires_at
+    parsed_expires = None
+    if expires_at:
+        try:
+            parsed_expires = datetime.fromisoformat(expires_at)
+        except ValueError:
+            pass
+
+    # Process optional document
+    doc_name = None
+    doc_hash = None
+    if document and document.filename:
+        contents = await document.read()
+        doc_name = document.filename
+        doc_hash = hashlib.sha256(contents).hexdigest()
 
     consent = ConsentRecord(
         organization_id=org_id,
         user_identifier_hash=user_hash,
-        consent_type=payload.consent_type,
-        purpose=payload.purpose,
+        consent_type=consent_type,
+        purpose=purpose,
         granted_at=granted_at,
-        expires_at=payload.expires_at,
+        expires_at=parsed_expires,
+        document_name=doc_name,
+        document_hash=doc_hash,
     )
     db.add(consent)
     await db.flush()
 
     # Compute consent hash
-    consent.consent_hash = _hash_consent(org_id, user_hash, payload.consent_type, granted_at)
+    consent.consent_hash = _hash_consent(org_id, user_hash, consent_type, granted_at)
 
     await db.flush()
     await db.refresh(consent)
@@ -190,6 +217,57 @@ async def confirm_anchor(
     await db.flush()
     await db.refresh(consent)
     log.info("consent_anchored_via_wallet", consent_id=consent_id, txn_id=payload.txn_id)
+
+    # ── Auto-generate ZK proof for this consent record ────────────────────────
+    try:
+        proof = ZKProof(
+            organization_id=org_id,
+            proof_type="consent_compliance",
+            status="generating",
+            circuit_version=zk_service.CIRCUIT_VERSION,
+        )
+        db.add(proof)
+        await db.flush()
+
+        consent_dicts = [{
+            "id": consent.id,
+            "consent_hash": consent.consent_hash,
+            "consent_type": consent.consent_type.value if hasattr(consent.consent_type, "value") else consent.consent_type,
+            "granted_at": consent.granted_at.timestamp() if consent.granted_at else 0,
+            "status": consent.status.value if hasattr(consent.status, "value") else consent.status,
+        }]
+
+        proof_result = zk_service.generate_proof(org_id, consent_dicts)
+        proof.public_inputs = proof_result["public_inputs"]
+        proof.proof_data = proof_result["proof"]
+        proof.proof_hash = proof_result["proof_hash"]
+        proof.status = "generated"
+
+        # Auto-submit on-chain
+        is_valid = zk_service.verify_proof(
+            {"proof": proof.proof_data, "proof_hash": proof.proof_hash, "is_mock": True},
+            proof.public_inputs or {},
+        )
+        proof.verification_result = is_valid
+        proof.verified_at = datetime.now(timezone.utc)
+
+        try:
+            txn_id_proof = algorand.submit_proof(
+                proof_hash=proof.proof_hash,
+                org_id=org_id,
+                compliance_type=proof.proof_type,
+                verification_result=is_valid,
+            )
+            proof.txn_id = txn_id_proof
+            proof.status = "verified" if is_valid else "failed"
+        except Exception:
+            proof.status = "generated"  # on-chain submission failed, keep as generated
+
+        await db.flush()
+        log.info("auto_zk_proof_created", consent_id=consent_id, proof_id=proof.id, status=proof.status)
+    except Exception as e:
+        log.warning("auto_zk_proof_failed", consent_id=consent_id, error=str(e))
+
     return consent
 
 
