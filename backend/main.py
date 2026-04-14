@@ -22,10 +22,16 @@ log = structlog.get_logger()
 async def lifespan(app: FastAPI):
     # Startup
     log.info("Starting CipherTrust backend", network=settings.ALGORAND_NETWORK)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    log.info("DB URL scheme", url=settings.async_database_url.split("@")[0] if "@" in settings.async_database_url else "no-@")
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        log.info("Database initialised")
+    except Exception as exc:
+        log.error("Database connection failed", error=str(exc))
+        raise
     await init_redis()
-    log.info("Database and cache initialised")
+    log.info("Startup complete")
     yield
     # Shutdown
     await close_redis()
