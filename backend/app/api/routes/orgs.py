@@ -60,9 +60,20 @@ async def register_onchain(
     metadata = f"{org.name}:{payload.wallet_address}"
     metadata_hash = hashlib.sha256(metadata.encode()).hexdigest()
 
+    # Check if this wallet is already linked to another org
+    existing = await db.execute(
+        select(Organization).where(
+            Organization.wallet_address == payload.wallet_address,
+            Organization.id != org_id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="This wallet address is already linked to another organization")
+
     try:
         result_data = algorand.register_org(org.name, metadata_hash)
-        org.did = result_data["did"]
+        # DID uses the org's wallet address (unique per org)
+        org.did = f"did:algo:{payload.wallet_address}"
         org.wallet_address = payload.wallet_address
         org.metadata_hash = result_data["metadata_hash"]
         org.is_registered_onchain = True
