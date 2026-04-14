@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Shield, AlertCircle, CheckCircle2, ExternalLink, Users, Key, Award, ArrowRight, Activity, Loader2 } from "lucide-react";
+import { Shield, AlertCircle, CheckCircle2, ExternalLink, Users, Key, Award, ArrowRight, Loader2 } from "lucide-react";
 import { complianceApi, orgApi } from "@/lib/api";
 import { useStore } from "@/lib/store";
 import { StatCard, StatusBadge, HashDisplay } from "@/components/ui/Cards";
