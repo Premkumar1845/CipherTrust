@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Plus, Anchor, Trash2, ExternalLink, Wallet } from "lucide-react";
+import { Users, Plus, Anchor, Trash2, ExternalLink, Paperclip } from "lucide-react";
 import { consentApi } from "@/lib/api";
 import { useStore } from "@/lib/store";
 import { usePeraWallet } from "@/lib/usePeraWallet";
@@ -31,6 +31,7 @@ export default function ConsentPage() {
   const [consentType, setConsentType] = useState("data_processing");
   const [purpose, setPurpose] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
+  const [document, setDocument] = useState<File | null>(null);
 
   const orgId = activeOrg?.id;
 
@@ -71,6 +72,7 @@ export default function ConsentPage() {
         consent_type: consentType,
         purpose,
         expires_at: expiresAt || undefined,
+        document: document || undefined,
       });
       const consentId = createRes.data.id;
 
@@ -88,7 +90,7 @@ export default function ConsentPage() {
 
       toast.success("Consent tokenised on Algorand! 1 ALGO anchored on-chain.");
       setShowForm(false);
-      setUserId(""); setPurpose(""); setExpiresAt("");
+      setUserId(""); setPurpose(""); setExpiresAt(""); setDocument(null);
       await load();
     } catch (e: any) {
       if (e?.message?.includes("rejected") || e?.message?.includes("cancelled")) {
@@ -232,7 +234,23 @@ export default function ConsentPage() {
                 className="input-field"
               />
             </div>
-            <div className="flex items-end gap-3 flex-wrap">
+            <div className="md:col-span-2">
+              <label className="input-label">Supporting document (optional)</label>
+              <div className="relative">
+                <input
+                  type="file"
+                  onChange={(e) => setDocument(e.target.files?.[0] || null)}
+                  className="input-field file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-indigo-500/20 file:text-indigo-400 hover:file:bg-indigo-500/30 file:cursor-pointer"
+                />
+                {document && (
+                  <p className="mt-1 text-[11px] text-slate-500 flex items-center gap-1">
+                    <Paperclip className="w-3 h-3" />
+                    {document.name} ({(document.size / 1024).toFixed(1)} KB)
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-end gap-3 flex-wrap md:col-span-2">
               <button type="submit" disabled={submitting} className="btn-primary whitespace-nowrap">
                 {submitting ? "Waiting for Pera approval..." : "Save & anchor (1 ALGO)"}
               </button>
@@ -263,7 +281,7 @@ export default function ConsentPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/[0.06]">
-                    {["User hash", "Type", "Purpose", "Granted", "Status", "On-chain", "Actions"].map((h) => (
+                    {["User hash", "Type", "Purpose", "Doc", "Granted", "Status", "On-chain", "Actions"].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-[10px] text-slate-500 font-semibold uppercase tracking-wider whitespace-nowrap">
                         {h}
                       </th>
@@ -281,6 +299,16 @@ export default function ConsentPage() {
                       </td>
                       <td className="px-4 py-3 text-slate-400 text-xs max-w-[220px] truncate">
                         {c.purpose}
+                      </td>
+                      <td className="px-4 py-3">
+                        {c.document_name ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-indigo-400" title={`SHA-256: ${c.document_hash}`}>
+                            <Paperclip className="w-3 h-3" />
+                            <span className="max-w-[100px] truncate">{c.document_name}</span>
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-600">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
                         {new Date(c.granted_at).toLocaleDateString("en-IN")}
@@ -383,6 +411,15 @@ export default function ConsentPage() {
                     <p className="text-[10px] text-slate-600 mb-0.5">Granted</p>
                     <p className="text-xs text-slate-400">{new Date(c.granted_at).toLocaleDateString("en-IN")}</p>
                   </div>
+                  {c.document_name && (
+                    <div className="col-span-2">
+                      <p className="text-[10px] text-slate-600 mb-0.5">Document</p>
+                      <span className="inline-flex items-center gap-1 text-xs text-indigo-400" title={`SHA-256: ${c.document_hash}`}>
+                        <Paperclip className="w-3 h-3" />
+                        {c.document_name}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {c.is_anchored && c.txn_id && (
