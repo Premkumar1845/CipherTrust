@@ -72,6 +72,7 @@ export default function AnalyticsPage() {
   const trend: any[] = data?.trend ?? [];
   const score: number = data?.score ?? 0;
   const grade: string = data?.grade ?? "F";
+  const counts = data?.counts ?? {};
 
   const highFlags = riskFlags.filter((f) => f.level === "high");
   const mediumFlags = riskFlags.filter((f) => f.level === "medium");
@@ -91,20 +92,20 @@ export default function AnalyticsPage() {
           <p className={`text-6xl font-bold font-display ${GRADE_COLOR[grade]}`}>{grade}</p>
           <p className="text-xs text-slate-500 mt-1">Score: {score}/100</p>
         </div>
+        <StatCard label="Total consents" value={counts.total_consents ?? 0} accent="indigo" />
+        <StatCard label="Active consents" value={counts.active_consents ?? 0} accent="emerald" />
+        <StatCard label="Anchored on-chain" value={counts.anchored_consents ?? 0} accent="teal" />
+      </div>
+
+      {/* Proofs & Certificates row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard label="Total ZK proofs" value={counts.total_proofs ?? 0} accent="indigo" />
+        <StatCard label="Verified proofs" value={counts.verified_proofs ?? 0} accent="emerald" />
+        <StatCard label="Total certificates" value={counts.total_certificates ?? 0} accent="teal" />
         <StatCard
-          label="Risk flags (high)"
-          value={highFlags.length}
-          accent={highFlags.length > 0 ? "red" : "emerald"}
-        />
-        <StatCard
-          label="Risk flags (medium)"
-          value={mediumFlags.length}
-          accent={mediumFlags.length > 0 ? "amber" : "emerald"}
-        />
-        <StatCard
-          label="Risk flags (low)"
-          value={lowFlags.length}
-          accent="indigo"
+          label="Risk flags"
+          value={riskFlags.length}
+          accent={highFlags.length > 0 ? "red" : mediumFlags.length > 0 ? "amber" : "emerald"}
         />
       </div>
 
