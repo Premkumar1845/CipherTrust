@@ -19,7 +19,7 @@ is an active research area for Algorand.
 from beaker import Application, GlobalStateValue
 from beaker.lib.storage import BoxMapping
 from pyteal import (
-    Assert, Global, If, Int, Seq, Txn, abi, pragma
+    Assert, If, Int, Seq, Txn, abi, pragma
 )
 
 pragma(compiler_version=">=0.26.0")
