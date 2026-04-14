@@ -14,7 +14,7 @@
 
 **By BlockVeritas** · Zero-knowledge proof based DPDPA compliance infrastructure
 
-[Live Demo](#deployment) · [API Docs](#api-reference) · [Architecture](#system-architecture) · [Contributing](#contributing)
+[🌐 Live Demo](https://ciphertrust.vercel.app) · [API Docs](#api-reference) · [Architecture](#system-architecture) · [Contributing](#contributing)
 
 </div>
 
