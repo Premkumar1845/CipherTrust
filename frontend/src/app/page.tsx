@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import {
-  Shield, Lock, FileCheck, Zap, ChevronRight, GitBranch, ArrowRight,
+  Lock, FileCheck, Zap, ChevronRight, GitBranch, ArrowRight,
   Sparkles, Building2, HeartPulse, Globe2
 } from "lucide-react";
 
