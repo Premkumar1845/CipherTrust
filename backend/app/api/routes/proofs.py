@@ -1,7 +1,6 @@
 """
 CipherTrust — ZK Proof Routes
 """
-import json
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.blockchain.algorand_client import algorand
 from app.core.database import get_db
 from app.models.user import ConsentRecord, Organization, ZKProof
-from app.schemas.schemas import ProofGenerateRequest, ProofResponse, ProofSubmitRequest
+from app.schemas.schemas import ProofGenerateRequest, ProofResponse
 from app.services.zk_service import zk_service
 
 router = APIRouter()
@@ -61,7 +60,7 @@ async def generate_proof(
                 "id": c.id,
                 "consent_hash": c.consent_hash,
                 "consent_type": c.consent_type,
-                "granted_at": c.granted_at.timestamp() if c.granted_at else 0,
+                "granted_at": c.granted_at.timestamp() if c.granted_at else 0,  # type: ignore[truthy-bool]
                 "status": c.status,
             }
             for c in consents
@@ -69,18 +68,18 @@ async def generate_proof(
 
         proof_result = zk_service.generate_proof(org_id, consent_dicts)
 
-        proof.public_inputs = proof_result["public_inputs"]
-        proof.proof_data = proof_result["proof"]
-        proof.proof_hash = proof_result["proof_hash"]
-        proof.status = "generated"
+        proof.public_inputs = proof_result["public_inputs"]  # type: ignore[assignment]
+        proof.proof_data = proof_result["proof"]  # type: ignore[assignment]
+        proof.proof_hash = proof_result["proof_hash"]  # type: ignore[assignment]
+        proof.status = "generated"  # type: ignore[assignment]
 
         await db.flush()
         await db.refresh(proof)
         return proof
 
     except Exception as e:
-        proof.status = "failed"
-        proof.error_message = str(e)
+        proof.status = "failed"  # type: ignore[assignment]
+        proof.error_message = str(e)  # type: ignore[assignment]
         await db.flush()
         raise HTTPException(status_code=500, detail=f"Proof generation failed: {str(e)}")
 
@@ -110,35 +109,35 @@ async def submit_proof(
     # Off-chain verification
     is_valid = zk_service.verify_proof(
         {"proof": proof.proof_data, "proof_hash": proof.proof_hash, "is_mock": True},
-        proof.public_inputs or {},
+        proof.public_inputs or {},  # type: ignore[arg-type]
     )
 
-    proof.verification_result = is_valid
-    proof.verified_at = datetime.now(timezone.utc)
+    proof.verification_result = is_valid  # type: ignore[assignment]
+    proof.verified_at = datetime.now(timezone.utc)  # type: ignore[assignment]
 
     try:
         txn_id = algorand.submit_proof(
-            proof_hash=proof.proof_hash,
+            proof_hash=proof.proof_hash,  # type: ignore[arg-type]
             org_id=org_id,
-            compliance_type=proof.proof_type,
+            compliance_type=proof.proof_type,  # type: ignore[arg-type]
             verification_result=is_valid,
         )
-        proof.txn_id = txn_id
-        proof.status = "verified" if is_valid else "failed"
+        proof.txn_id = txn_id  # type: ignore[assignment]
+        proof.status = "verified" if is_valid else "failed"  # type: ignore[assignment]
 
         # Update org compliance score
         result2 = await db.execute(select(Organization).where(Organization.id == org_id))
         org = result2.scalar_one_or_none()
         if org and is_valid:
-            org.compliance_score = min(100.0, org.compliance_score + 10.0)
+            org.compliance_score = min(100.0, org.compliance_score + 10.0)  # type: ignore[assignment]
 
         await db.flush()
         await db.refresh(proof)
         return proof
 
     except Exception as e:
-        proof.status = "failed"
-        proof.error_message = str(e)
+        proof.status = "failed"  # type: ignore[assignment]
+        proof.error_message = str(e)  # type: ignore[assignment]
         await db.flush()
         raise HTTPException(status_code=500, detail=f"On-chain submission failed: {str(e)}")
 
