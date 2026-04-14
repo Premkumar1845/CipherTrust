@@ -5,10 +5,10 @@ Registers organization DIDs on Algorand.
 Deploy with: python contracts/identity.py
 """
 
-from beaker import Application, GlobalStateValue, localnet
+from beaker import Application, GlobalStateValue
 from beaker.lib.storage import BoxMapping
 from pyteal import (
-    Approve, Assert, Bytes, Global, Int, Reject,
+    Assert, Bytes, Int,
     Seq, Txn, abi, pragma
 )
 
@@ -100,7 +100,6 @@ def get_org_count(*, output: abi.Uint64) -> abi.Uint64:
 
 if __name__ == "__main__":
     import os
-    import json
     from algokit_utils import ApplicationClient, get_localnet_default_account
     from algosdk.v2client import algod
 
