@@ -49,6 +49,10 @@ export const consentApi = {
   list: (orgId: number) => api.get(`/consent/${orgId}/records`),
   anchor: (orgId: number, consentId: number) =>
     api.post(`/consent/${orgId}/records/${consentId}/anchor`),
+  buildAnchorTxn: (orgId: number, consentId: number) =>
+    api.post(`/consent/${orgId}/records/${consentId}/build-anchor-txn`),
+  confirmAnchor: (orgId: number, consentId: number, txnId: string) =>
+    api.post(`/consent/${orgId}/records/${consentId}/confirm-anchor`, { txn_id: txnId }),
   revoke: (orgId: number, consentId: number) =>
     api.delete(`/consent/${orgId}/records/${consentId}`),
 };
