@@ -13,7 +13,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import case, cast, Date, func, literal_column, select, union_all
+from sqlalchemy import case, cast, Date, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import (
@@ -39,61 +39,79 @@ class ComplianceAnalyticsService:
         """Single query to get all counts needed for score + risk flags."""
         row = (await db.execute(
             select(
+                # total consents
+                func.count().label("total_consents"),
                 # active consents
                 func.count().filter(
-                    ConsentRecord.organization_id == org_id,
                     ConsentRecord.status == "active",
                 ).label("active_consents"),
                 # anchored consents
                 func.count().filter(
-                    ConsentRecord.organization_id == org_id,
                     ConsentRecord.is_anchored == True,
                 ).label("anchored_consents"),
                 # expired (still marked active but past expiry)
                 func.count().filter(
-                    ConsentRecord.organization_id == org_id,
                     ConsentRecord.status == "active",
                     ConsentRecord.expires_at < now,
                 ).label("expired_consents"),
                 # unanchored active
                 func.count().filter(
-                    ConsentRecord.organization_id == org_id,
                     ConsentRecord.status == "active",
                     ConsentRecord.is_anchored == False,
                 ).label("unanchored_consents"),
-            ).select_from(ConsentRecord)
+                # revoked
+                func.count().filter(
+                    ConsentRecord.status == "revoked",
+                ).label("revoked_consents"),
+            ).select_from(ConsentRecord).where(
+                ConsentRecord.organization_id == org_id,
+            )
         )).one()
 
         proof_row = (await db.execute(
             select(
+                func.count().label("total_proofs"),
                 func.count().filter(
-                    ZKProof.organization_id == org_id,
                     ZKProof.status == "verified",
                 ).label("verified_proofs"),
+                func.count().filter(
+                    ZKProof.status == "generated",
+                ).label("generated_proofs"),
                 func.max(
                     case(
                         (ZKProof.status == "verified", ZKProof.verified_at),
                     )
                 ).label("latest_proof_date"),
-            ).select_from(ZKProof)
+            ).select_from(ZKProof).where(
+                ZKProof.organization_id == org_id,
+            )
         )).one()
 
-        cert_count = await db.scalar(
-            select(func.count()).where(
+        cert_row = (await db.execute(
+            select(
+                func.count().label("total_certs"),
+                func.count().filter(
+                    ComplianceCertificate.status == "compliant",
+                    ComplianceCertificate.expires_at > now,
+                ).label("active_certs"),
+            ).select_from(ComplianceCertificate).where(
                 ComplianceCertificate.organization_id == org_id,
-                ComplianceCertificate.status == "compliant",
-                ComplianceCertificate.expires_at > now,
             )
-        ) or 0
+        )).one()
 
         return {
+            "total": row.total_consents or 0,
             "active": row.active_consents or 0,
             "anchored": row.anchored_consents or 0,
             "expired": row.expired_consents or 0,
             "unanchored": row.unanchored_consents or 0,
+            "revoked": row.revoked_consents or 0,
+            "total_proofs": proof_row.total_proofs or 0,
             "verified": proof_row.verified_proofs or 0,
+            "generated_proofs": proof_row.generated_proofs or 0,
             "latest_proof_date": proof_row.latest_proof_date,
-            "active_cert": cert_count,
+            "total_certs": cert_row.total_certs or 0,
+            "active_cert": cert_row.active_certs or 0,
         }
 
     async def calculate_score(self, org_id: int, db: AsyncSession, data: Optional[dict] = None) -> float:
@@ -215,6 +233,7 @@ class ComplianceAnalyticsService:
     async def get_dashboard(self, org_id: int, db: AsyncSession) -> Dict[str, Any]:
         """Score + flags + trend with Redis cache."""
         cache_key = f"analytics:dashboard:{org_id}"
+        r = None
         try:
             r = get_redis()
             cached = await r.get(cache_key)
@@ -235,10 +254,22 @@ class ComplianceAnalyticsService:
             "grade": _grade(score),
             "risk_flags": flags,
             "trend": trend,
+            "counts": {
+                "total_consents": data["total"],
+                "active_consents": data["active"],
+                "anchored_consents": data["anchored"],
+                "revoked_consents": data["revoked"],
+                "total_proofs": data["total_proofs"],
+                "verified_proofs": data["verified"],
+                "generated_proofs": data["generated_proofs"],
+                "total_certificates": data["total_certs"],
+                "active_certificates": data["active_cert"],
+            },
         }
 
         try:
-            await r.setex(cache_key, CACHE_TTL, json.dumps(result, default=str))
+            if r:
+                await r.setex(cache_key, CACHE_TTL, json.dumps(result, default=str))
         except Exception:
             pass
 
