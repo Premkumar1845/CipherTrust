@@ -8,12 +8,13 @@
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js_14-000?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![ZK Proofs](https://img.shields.io/badge/Proofs-Circom_Groth16-purple?style=for-the-badge)](https://docs.circom.io)
-[![Docker](https://img.shields.io/badge/Deploy-Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel-000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
+[![Docker](https://img.shields.io/badge/Backend-Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **By BlockVeritas** · Zero-knowledge proof based DPDPA compliance infrastructure
 
-[Live Demo](#quick-start) · [API Docs](#api-reference) · [Architecture](#system-architecture) · [Contributing](#contributing)
+[Live Demo](#deployment) · [API Docs](#api-reference) · [Architecture](#system-architecture) · [Contributing](#contributing)
 
 </div>
 
@@ -71,25 +72,35 @@ CipherTrust solves this with a three-layer cryptographic approach:
 - User identifiers (emails, UUIDs) are **SHA-256 hashed** before storage
 - Raw personal data **never touches the database**
 - Consent records include type, purpose, timestamp, and expiry
+- **Document upload** — attach supporting files (SHA-256 hashed on upload)
 - Full revocation support with audit trail
+- **Pera Wallet on-chain anchoring** — users sign anchor transactions via Pera Wallet
 
 ### 🧮 Zero-Knowledge Proof Generation
 - **Circom 2** circuits with **Groth16** proving system
 - Proves consent count, validity, and timestamps without revealing data
+- **Auto ZK proof generation** — a proof is automatically created each time a consent record is anchored on-chain
 - Mock proof mode for development (no trusted setup required)
 - Full snarkjs-compatible proof format
 
 ### ⛓️ Algorand Blockchain Verification
 - Proof hashes anchored on **Algorand TestNet** via smart contracts
 - Compliance certificates issued as **Algorand Standard Assets (ASAs)**
-- Transaction-level verification for regulators
-- Pera Wallet integration for signing
+- Transaction-level verification for regulators via [Lora Explorer](https://lora.algokit.io/testnet)
+- Pera Wallet integration for transaction signing
+
+### 📄 PDF Compliance Certificates
+- **Downloadable PDF certificates** generated via reportlab
+- Professional layout with CipherTrust branding, details table, and verification section
+- Clickable Lora Explorer link for on-chain verification
+- One-click download from the certificates dashboard
 
 ### 📊 Compliance Analytics Dashboard
 - Real-time compliance scoring (0–100) with letter grades (A–F)
 - Risk flag detection (high / medium / low severity)
+- **Comprehensive stat cards** — total consents, active, anchored, revoked, proofs, certificates
 - 30-day trend charts for consent and proof activity
-- Organisation-level compliance summaries
+- **Redis-cached** responses (~13ms response time)
 
 ### 🏛️ Regulator Portal
 - Dedicated regulator/auditor dashboard
@@ -168,6 +179,7 @@ CipherTrust solves this with a three-layer cryptographic approach:
 | | Pydantic | 2.x | Schema validation |
 | | bcrypt | 4.x | Password hashing |
 | | PyJWT | 2.x | JSON Web Token auth |
+| | reportlab | 4.x | PDF certificate generation |
 | **Blockchain** | Algorand SDK | 2.x | Python SDK for Algorand |
 | | Pera Wallet SDK | 1.x | Browser wallet integration |
 | **ZK Proofs** | Circom | 2.x | Circuit compiler |
@@ -175,6 +187,7 @@ CipherTrust solves this with a three-layer cryptographic approach:
 | **Infrastructure** | PostgreSQL | 15 | Primary database |
 | | Redis | 7 | Caching & rate limiting |
 | | Docker Compose | 2.x | Container orchestration |
+| | Vercel | — | Frontend hosting + Edge CDN |
 | **Smart Contracts** | PyTeal + Beaker | — | Algorand contract framework |
 
 ---
@@ -188,18 +201,18 @@ ciphertrust/
 ├── 📄 CHANGELOG.md                 Version history
 ├── 📄 AGENTS.md                    AI agent configuration
 ├── 📄 CLAUDE.md                    Claude AI instructions
+├── 📄 pyrightconfig.json           Pyright/Pylance config (suppresses false positives)
 ├── 📄 docker-compose.yml           Container orchestration (4 services)
 ├── 📄 api.http                     HTTP client test file
 ├── 📄 setup.sh                     Initial setup script
-├── 📄 .env.example                 Environment variable template
 │
 ├── 🖥️  frontend/                    Next.js 14 Dashboard
 │   ├── Dockerfile                  Production container (node:22-alpine)
-│   ├── .dockerignore               Optimised build context (~385KB)
+│   ├── vercel.json                 Vercel deployment config
 │   ├── package.json                Dependencies & scripts
 │   ├── tailwind.config.js          Custom design tokens + 11 animations
 │   ├── tsconfig.json               TypeScript configuration
-│   ├── next.config.js              Next.js settings
+│   ├── next.config.js              Next.js settings (Vercel-compatible)
 │   ├── postcss.config.js           PostCSS + Tailwind
 │   └── src/
 │       ├── styles/
@@ -227,10 +240,10 @@ ciphertrust/
 │           ├── dashboard/
 │           │   ├── layout.tsx      Sidebar + content layout
 │           │   ├── page.tsx        Score ring, quick actions, latest cert
-│           │   ├── consent/page.tsx    Consent CRUD + on-chain anchoring
+│           │   ├── consent/page.tsx    Consent CRUD + document upload + on-chain anchoring
 │           │   ├── proofs/page.tsx     ZK proof generation + submission
-│           │   ├── certificates/page.tsx  Compliance certificate issuance
-│           │   └── analytics/page.tsx    Score, risk flags, trend charts
+│           │   ├── certificates/page.tsx  Certificate issuance + PDF download 📄
+│           │   └── analytics/page.tsx    Score, counts, risk flags, trend charts
 │           └── regulator/
 │               ├── layout.tsx      Regulator layout
 │               ├── page.tsx        All orgs overview + compliance cards
@@ -239,7 +252,7 @@ ciphertrust/
 ├── ⚙️  backend/                     FastAPI Server
 │   ├── Dockerfile                  Python 3.11-slim container
 │   ├── main.py                     App entry point + CORS + routes
-│   ├── requirements.txt            Production dependencies
+│   ├── requirements.txt            Production dependencies (incl. reportlab)
 │   ├── requirements-test.txt       Test dependencies (pytest, httpx)
 │   ├── pyproject.toml              Project metadata
 │   ├── seed.py                     Database seeding script
@@ -248,14 +261,15 @@ ciphertrust/
 │   │   ├── env.py                  Migration environment
 │   │   ├── script.py.mako          Template
 │   │   └── versions/
-│   │       └── 0001_initial.py     Initial schema (users, orgs, consents, proofs, certs)
+│   │       ├── 0001_initial.py     Initial schema (users, orgs, consents, proofs, certs)
+│   │       └── 0002_consent_document.py  Add document_name & document_hash columns
 │   ├── app/
 │   │   ├── api/routes/
 │   │   │   ├── auth.py             Register + login (JWT)
 │   │   │   ├── orgs.py             Organisation CRUD + on-chain DID
 │   │   │   ├── consent.py          Consent CRUD + anchor + revoke
 │   │   │   ├── proofs.py           ZK proof generate + submit
-│   │   │   ├── compliance.py       Certificates + verification
+│   │   │   ├── compliance.py       Certificates + verification + PDF download 📄
 │   │   │   ├── analytics.py        Dashboard analytics
 │   │   │   └── health.py           Healthcheck endpoint
 │   │   ├── blockchain/
@@ -388,9 +402,10 @@ Update `.env` with the returned App IDs.
 ### Consent Records
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/consent/{orgId}/records` | Create consent record (auto-hashed) |
+| `POST` | `/consent/{orgId}/records` | Create consent record (auto-hashed, supports doc upload) |
 | `GET` | `/consent/{orgId}/records` | List all consent records |
-| `POST` | `/consent/{orgId}/records/{id}/anchor` | Anchor consent hash on Algorand |
+| `POST` | `/consent/{orgId}/records/{id}/build-anchor-txn` | Build unsigned anchor transaction for Pera Wallet |
+| `POST` | `/consent/{orgId}/records/{id}/confirm-anchor` | Confirm signed anchor + auto-generate ZK proof |
 | `DELETE` | `/consent/{orgId}/records/{id}` | Revoke consent (irreversible) |
 
 ### ZK Proofs
@@ -406,6 +421,7 @@ Update `.env` with the returned App IDs.
 | `GET` | `/compliance/{orgId}/summary` | Full compliance summary + score |
 | `POST` | `/compliance/{orgId}/issue-certificate` | Issue NFT compliance certificate |
 | `GET` | `/compliance/{orgId}/certificates` | List all certificates |
+| `GET` | `/compliance/{orgId}/certificates/{certId}/pdf` | Download PDF certificate 📄 |
 | `GET` | `/compliance/verify/{txnId}` | Public transaction verification |
 
 ### Analytics
@@ -542,7 +558,37 @@ python proof_verifier.py
 
 ## Deployment
 
-### Docker Compose (recommended)
+### Frontend — Vercel (recommended)
+
+The Next.js frontend is configured for **one-click Vercel deployment**.
+
+#### Step 1: Import on Vercel
+
+1. Go to [vercel.com/new](https://vercel.com/new)
+2. Import the GitHub repository: `Premkumar1845/CipherTrust`
+3. Set **Root Directory** to `frontend`
+4. Framework Preset will auto-detect **Next.js**
+
+#### Step 2: Set Environment Variables
+
+In Vercel → Project Settings → Environment Variables, add:
+
+| Variable | Value | Required |
+|----------|-------|----------|
+| `NEXT_PUBLIC_API_URL` | Your backend URL (e.g. `https://your-backend.onrender.com`) | ✅ |
+| `NEXT_PUBLIC_ALGORAND_NETWORK` | `testnet` | Optional |
+
+#### Step 3: Deploy
+
+Click **Deploy** — Vercel handles build, CDN, and SSL automatically.
+
+> **Note:** The frontend uses `--legacy-peer-deps` for installation. This is pre-configured in `vercel.json`.
+
+---
+
+### Backend — Docker Compose (self-hosted)
+
+The backend (FastAPI + PostgreSQL + Redis) runs via Docker Compose on any VPS or cloud instance.
 
 ```bash
 docker compose up -d --build
@@ -554,6 +600,23 @@ docker compose up -d --build
 | `ciphertrust_redis` | redis:7-alpine | 6379 |
 | `ciphertrust_backend` | python:3.11-slim | 8000 |
 | `ciphertrust_frontend` | node:22-alpine | 3000 |
+
+> **Tip:** When deploying the backend to a cloud host (Render, Railway, Fly.io), set the `NEXT_PUBLIC_API_URL` Vercel environment variable to your backend's public URL.
+
+### Full Local Stack (Docker Compose)
+
+```bash
+docker compose up -d --build
+```
+
+This launches all 4 services locally:
+
+| Service | Port | URL |
+|---------|------|-----|
+| PostgreSQL 15 | 5432 | — |
+| Redis 7 | 6379 | — |
+| FastAPI Backend | 8000 | http://localhost:8000/docs |
+| Next.js Frontend | 3000 | http://localhost:3000 |
 
 ### Environment Variables
 
@@ -589,12 +652,18 @@ DAOs and DeFi protocols demonstrating regulatory compliance while maintaining on
 ## Roadmap
 
 - [x] Core consent management with hashing
+- [x] Document upload with SHA-256 hashing
+- [x] Pera Wallet on-chain consent anchoring
+- [x] Auto ZK proof generation on anchor
 - [x] ZK proof generation (mock + real circuits)
 - [x] Algorand blockchain integration (TestNet)
 - [x] Compliance certificate issuance (ASAs)
+- [x] PDF certificate download with Lora Explorer links
 - [x] Regulator portal with verification
 - [x] Premium glassmorphism UI with animations
+- [x] Redis-cached analytics dashboard
 - [x] Docker Compose deployment
+- [x] Vercel frontend deployment
 - [ ] Algorand MainNet deployment
 - [ ] Multi-regulation support (GDPR, CCPA)
 - [ ] Mobile app (React Native)
