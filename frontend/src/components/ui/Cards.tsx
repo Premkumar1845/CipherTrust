@@ -6,7 +6,7 @@ interface StatCardProps {
   label: string;
   value: string | number;
   sub?: string;
-  accent?: "indigo" | "emerald" | "amber" | "red";
+  accent?: "indigo" | "emerald" | "amber" | "red" | "teal";
   icon?: React.ReactNode;
 }
 
@@ -15,6 +15,7 @@ const accentConfig = {
   emerald: { text: "text-emerald-400", glow: "shadow-[0_0_20px_rgba(16,185,129,0.08)]", gradient: "from-emerald-500/10 to-transparent", dot: "bg-emerald-400" },
   amber: { text: "text-amber-400", glow: "shadow-[0_0_20px_rgba(245,158,11,0.08)]", gradient: "from-amber-500/10 to-transparent", dot: "bg-amber-400" },
   red: { text: "text-red-400", glow: "shadow-[0_0_20px_rgba(239,68,68,0.08)]", gradient: "from-red-500/10 to-transparent", dot: "bg-red-400" },
+  teal: { text: "text-teal-400", glow: "shadow-[0_0_20px_rgba(45,212,191,0.08)]", gradient: "from-teal-500/10 to-transparent", dot: "bg-teal-400" },
 };
 
 export function StatCard({ label, value, sub, accent = "indigo", icon }: StatCardProps) {
