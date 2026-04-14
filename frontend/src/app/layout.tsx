@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   title: "CipherTrust — Privacy-Preserving Compliance on Algorand",
   description:
     "Zero-knowledge proof based DPDPA compliance verification. Prove compliance without exposing personal data.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
