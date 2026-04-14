@@ -12,7 +12,7 @@ Each certificate is a unique ASA (NFT) with:
 from beaker import Application, GlobalStateValue
 from beaker.lib.storage import BoxMapping
 from pyteal import (
-    Assert, Global, Int, Seq, Txn, abi, pragma
+    Assert, Int, Seq, Txn, abi, pragma
 )
 
 pragma(compiler_version=">=0.26.0")
