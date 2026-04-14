@@ -45,7 +45,18 @@ export const consentApi = {
     consent_type: string;
     purpose: string;
     expires_at?: string;
-  }) => api.post(`/consent/${orgId}/records`, data),
+    document?: File;
+  }) => {
+    const formData = new FormData();
+    formData.append("user_identifier", data.user_identifier);
+    formData.append("consent_type", data.consent_type);
+    formData.append("purpose", data.purpose);
+    if (data.expires_at) formData.append("expires_at", data.expires_at);
+    if (data.document) formData.append("document", data.document);
+    return api.post(`/consent/${orgId}/records`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
   list: (orgId: number) => api.get(`/consent/${orgId}/records`),
   anchor: (orgId: number, consentId: number) =>
     api.post(`/consent/${orgId}/records/${consentId}/anchor`),
@@ -85,4 +96,6 @@ export const complianceApi = {
     }),
   certificates: (orgId: number) => api.get(`/compliance/${orgId}/certificates`),
   verifyByTxn: (txnId: string) => api.get(`/compliance/verify/${txnId}`),
+  downloadPdf: (orgId: number, certId: number) =>
+    api.get(`/compliance/${orgId}/certificates/${certId}/pdf`, { responseType: "blob" }),
 };
