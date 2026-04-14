@@ -133,6 +133,14 @@ body {
     @apply w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-300;
   }
 
+  /* Select dropdown options — ensure visibility on OS-native white dropdown */
+  select.input-field option,
+  select option {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    padding: 8px 12px;
+  }
+
   .input-label {
     @apply block text-xs font-medium text-slate-400 mb-2 tracking-wide;
   }
