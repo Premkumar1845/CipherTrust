@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Award, Plus, ExternalLink, Shield, CheckCircle2 } from "lucide-react";
+import { Award, Plus, ExternalLink, CheckCircle2, Download } from "lucide-react";
 import { complianceApi, proofApi } from "@/lib/api";
 import { useStore } from "@/lib/store";
 import { StatusBadge, SectionHeader, EmptyState } from "@/components/ui/Cards";
@@ -14,6 +14,7 @@ export default function CertificatesPage() {
   const [issuing, setIssuing] = useState<number | null>(null);
   const [justIssued, setJustIssued] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [downloading, setDownloading] = useState<number | null>(null);
 
   const orgId = activeOrg?.id;
 
@@ -44,6 +45,13 @@ export default function CertificatesPage() {
     } finally {
       setIssuing(null);
     }
+  };
+
+  const handleDownloadPdf = (certId: number) => {
+    if (!orgId) return;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const url = `${baseUrl}/api/v1/compliance/${orgId}/certificates/${certId}/pdf`;
+    window.open(url, "_blank");
   };
 
   const issuedProofIds = new Set(certs.map((c) => c.proof_id));
@@ -153,17 +161,26 @@ export default function CertificatesPage() {
                   </div>
                 </div>
 
-                {cert.txn_id && (
-                  <a
-                    href={`https://lora.algokit.io/testnet/transaction/${cert.txn_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 border border-white/[0.08] hover:border-indigo-500/25 text-slate-400 hover:text-indigo-400 rounded-xl text-xs transition-all duration-200 hover:shadow-[0_0_10px_rgba(99,102,241,0.08)]"
+                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                  {cert.txn_id && (
+                    <a
+                      href={`https://lora.algokit.io/testnet/transaction/${cert.txn_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 border border-white/[0.08] hover:border-indigo-500/25 text-slate-400 hover:text-indigo-400 rounded-xl text-xs transition-all duration-200 hover:shadow-[0_0_10px_rgba(99,102,241,0.08)]"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      View on Lora
+                    </a>
+                  )}
+                  <button
+                    onClick={() => handleDownloadPdf(cert.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 hover:text-emerald-300 rounded-xl text-xs transition-all duration-200 hover:shadow-[0_0_10px_rgba(16,185,129,0.1)]"
                   >
-                    <ExternalLink className="w-3 h-3" />
-                    View on Lora
-                  </a>
-                )}
+                    <Download className="w-3 h-3" />
+                    Download PDF
+                  </button>
+                </div>
               </div>
 
               <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-2 lg:grid-cols-4 gap-4">
