@@ -83,6 +83,8 @@ class ConsentResponse(BaseModel):
     purpose: str
     granted_at: datetime
     expires_at: Optional[datetime]
+    document_name: Optional[str] = None
+    document_hash: Optional[str] = None
     consent_hash: Optional[str]
     txn_id: Optional[str]
     is_anchored: bool
@@ -130,6 +132,7 @@ class CertificateResponse(BaseModel):
     regulation: str
     asset_id: Optional[int]
     txn_id: Optional[str]
+    certificate_metadata: Optional[Dict[str, Any]] = None
     issued_at: Optional[datetime]
     expires_at: Optional[datetime]
 
