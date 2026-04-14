@@ -1,0 +1,13 @@
+{
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "frontend",
+    "contracts"
+  ],
+  "ignore": [
+    "contracts"
+  ],
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none"
+}
