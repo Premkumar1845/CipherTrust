@@ -14,7 +14,7 @@ Data is stored in Box storage keyed by consent_hash.
 from beaker import Application, GlobalStateValue
 from beaker.lib.storage import BoxMapping
 from pyteal import (
-    Approve, Assert, Global, Int, Seq, Txn, abi, pragma
+    Assert, Int, Seq, Txn, abi, pragma
 )
 
 pragma(compiler_version=">=0.26.0")
