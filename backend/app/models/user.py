@@ -107,6 +107,10 @@ class ConsentRecord(Base):
     expires_at = Column(DateTime(timezone=True), nullable=True)
     revoked_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Optional supporting document
+    document_name = Column(String(255), nullable=True)    # original filename
+    document_hash = Column(String(100), nullable=True)    # SHA-256 hash of document
+
     # On-chain anchoring
     consent_hash = Column(String(100), nullable=True)     # keccak256 of consent data
     txn_id = Column(String(100), nullable=True)           # Algorand transaction ID
