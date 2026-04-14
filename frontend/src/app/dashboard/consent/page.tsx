@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Plus, Anchor, Trash2, ExternalLink } from "lucide-react";
+import { Users, Plus, Anchor, Trash2, ExternalLink, Wallet } from "lucide-react";
 import { consentApi } from "@/lib/api";
 import { useStore } from "@/lib/store";
+import { usePeraWallet } from "@/lib/usePeraWallet";
 import { StatusBadge, HashDisplay, SectionHeader, EmptyState } from "@/components/ui/Cards";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -17,6 +18,7 @@ const CONSENT_TYPES = [
 
 export default function ConsentPage() {
   const { activeOrg } = useStore();
+  const { walletAddress, connect, signAndSendPayment } = usePeraWallet();
   const toast = useToast();
   const [consents, setConsents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ export default function ConsentPage() {
     if (!orgId) return;
     try {
       const res = await consentApi.list(orgId);
-      setConsents(res.data);
+      setConsents(res.data.filter((c: any) => c.status !== "revoked"));
     } catch {
       toast.error("Failed to load consent records");
     } finally {
@@ -49,20 +51,52 @@ export default function ConsentPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgId) return;
+
+    // Ensure wallet is connected before proceeding
+    let addr = walletAddress;
+    if (!addr) {
+      toast.info("Please connect your Pera Wallet to sign the transaction.");
+      addr = await connect();
+      if (!addr) {
+        toast.error("Wallet connection required to tokenise consent on-chain.");
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
-      await consentApi.create(orgId, {
+      // 1. Create consent record in the database (no blockchain yet)
+      const createRes = await consentApi.create(orgId, {
         user_identifier: userId,
         consent_type: consentType,
         purpose,
         expires_at: expiresAt || undefined,
       });
-      toast.success("Consent record created — 1 ALGO anchoring on-chain (processing in background).");
+      const consentId = createRes.data.id;
+
+      toast.info("Consent record saved. Please approve the 1 ALGO transaction in Pera Wallet...");
+
+      // 2. Get transaction parameters from backend
+      const txnRes = await consentApi.buildAnchorTxn(orgId, consentId);
+      const txnParams = txnRes.data;
+
+      // 3. Sign via Pera Wallet (user must approve)
+      const txnId = await signAndSendPayment(txnParams);
+
+      // 4. Confirm the anchor on backend
+      await consentApi.confirmAnchor(orgId, consentId, txnId);
+
+      toast.success("Consent tokenised on Algorand! 1 ALGO anchored on-chain.");
       setShowForm(false);
       setUserId(""); setPurpose(""); setExpiresAt("");
       await load();
     } catch (e: any) {
-      toast.error(e?.response?.data?.detail || "Failed to create consent record");
+      if (e?.message?.includes("rejected") || e?.message?.includes("cancelled")) {
+        toast.error("Transaction cancelled — consent record saved but not anchored.");
+      } else {
+        toast.error(e?.response?.data?.detail || e?.message || "Failed to create consent record");
+      }
+      await load(); // reload to show unanchored record
     } finally {
       setSubmitting(false);
     }
@@ -70,13 +104,40 @@ export default function ConsentPage() {
 
   const handleAnchor = async (consentId: number) => {
     if (!orgId) return;
+
+    // Ensure wallet is connected
+    let addr = walletAddress;
+    if (!addr) {
+      toast.info("Please connect your Pera Wallet to sign the transaction.");
+      addr = await connect();
+      if (!addr) {
+        toast.error("Wallet connection required to anchor on-chain.");
+        return;
+      }
+    }
+
     setAnchoring(consentId);
     try {
-      await consentApi.anchor(orgId, consentId);
+      // 1. Build transaction params from backend
+      const txnRes = await consentApi.buildAnchorTxn(orgId, consentId);
+      const txnParams = txnRes.data;
+
+      toast.info("Please approve the 1 ALGO transaction in Pera Wallet...");
+
+      // 2. Sign via Pera Wallet
+      const txnId = await signAndSendPayment(txnParams);
+
+      // 3. Confirm on backend
+      await consentApi.confirmAnchor(orgId, consentId, txnId);
+
       toast.success("Consent hash anchored on Algorand.");
       await load();
     } catch (e: any) {
-      toast.error(e?.response?.data?.detail || "Anchoring failed");
+      if (e?.message?.includes("rejected") || e?.message?.includes("cancelled")) {
+        toast.error("Transaction cancelled by user.");
+      } else {
+        toast.error(e?.response?.data?.detail || e?.message || "Anchoring failed");
+      }
     } finally {
       setAnchoring(null);
     }
@@ -125,7 +186,7 @@ export default function ConsentPage() {
       {showForm && (
         <div className="glass gradient-border p-4 sm:p-6 mb-6 animate-slide-up">
           <h3 className="text-sm font-display font-semibold text-white mb-2">New consent record</h3>
-          <p className="text-xs text-slate-500 mb-4">Creating a record will tokenise <span className="text-indigo-400 font-semibold">1 ALGO</span> on-chain as proof.</p>
+          <p className="text-xs text-slate-500 mb-4">Creating a record will prompt your <span className="text-indigo-400 font-semibold">Pera Wallet</span> to approve a <span className="text-indigo-400 font-semibold">1 ALGO</span> on-chain transaction.</p>
           <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="input-label">User identifier</label>
@@ -173,7 +234,7 @@ export default function ConsentPage() {
             </div>
             <div className="flex items-end gap-3 flex-wrap">
               <button type="submit" disabled={submitting} className="btn-primary whitespace-nowrap">
-                {submitting ? "Anchoring on-chain..." : "Save & anchor (1 ALGO)"}
+                {submitting ? "Waiting for Pera approval..." : "Save & anchor (1 ALGO)"}
               </button>
               <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">
                 Cancel
