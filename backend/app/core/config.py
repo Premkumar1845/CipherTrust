@@ -14,6 +14,16 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/ciphertrust"
 
+    @property
+    def async_database_url(self) -> str:
+        """Return DATABASE_URL with asyncpg driver, handling Render's postgres:// scheme."""
+        url = self.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
+
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
 
@@ -31,7 +41,7 @@ class Settings(BaseSettings):
     SMTP_TLS: bool = True
 
     # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001", "https://ciphertrust.vercel.app"]
 
     # Algorand
     ALGORAND_NODE_URL: str = "https://testnet-api.algonode.cloud"

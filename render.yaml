@@ -1,0 +1,46 @@
+databases:
+  - name: ciphertrust-db
+    plan: free
+    databaseName: ciphertrust
+    user: ciphertrust
+
+services:
+  - type: web
+    name: ciphertrust-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ciphertrust-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: ciphertrust-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: '["https://ciphertrust.vercel.app","http://localhost:3000"]'
+      - key: ALGORAND_NODE_URL
+        value: https://testnet-api.algonode.cloud
+      - key: ALGORAND_INDEXER_URL
+        value: https://testnet-idx.algonode.cloud
+      - key: ALGORAND_NETWORK
+        value: testnet
+      - key: ALGORAND_DEPLOYER_MNEMONIC
+        sync: false
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+    healthCheckPath: /api/v1/health
+
+  - type: redis
+    name: ciphertrust-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
