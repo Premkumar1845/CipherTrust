@@ -11,16 +11,18 @@ class Settings(BaseSettings):
     APP_NAME: str = "CipherTrust"
     DEBUG: bool = False
 
-    # Database
+    # Database — Railway sets DATABASE_URL or DATABASE_PRIVATE_URL
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/ciphertrust"
+    DATABASE_PRIVATE_URL: str = ""
 
     @property
     def async_database_url(self) -> str:
-        """Return DATABASE_URL with asyncpg driver, handling Render's postgres:// scheme."""
-        url = self.DATABASE_URL
+        """Return DATABASE_URL with asyncpg driver, handling Railway/Render postgres:// scheme."""
+        # Prefer private URL (Railway internal networking, faster)
+        url = self.DATABASE_PRIVATE_URL or self.DATABASE_URL
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
-        elif url.startswith("postgresql://"):
+        elif url.startswith("postgresql://") and "+" not in url.split("://")[0]:
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url
 
