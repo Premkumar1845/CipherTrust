@@ -28,13 +28,21 @@ async def lifespan(app: FastAPI):
         log.info("Database initialised")
     except Exception as exc:
         log.error("Database connection failed", error=str(exc))
-        log.warning("App starting without database — set DATABASE_URL env var")
-    await init_redis()
+    try:
+        await init_redis()
+    except Exception:
+        pass
     log.info("Startup complete")
     yield
     # Shutdown
-    await close_redis()
-    await engine.dispose()
+    try:
+        await close_redis()
+    except Exception:
+        pass
+    try:
+        await engine.dispose()
+    except Exception:
+        pass
     log.info("Shutdown complete")
 
 
