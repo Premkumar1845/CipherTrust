@@ -20,19 +20,15 @@ log = structlog.get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import os, sys
     # Startup
-    raw_db = os.environ.get("DATABASE_URL", "<NOT SET>")
-    print(f"[BOOT] DATABASE_URL prefix: {raw_db[:40]}...", file=sys.stderr, flush=True)
-    print(f"[BOOT] Async URL prefix: {settings.async_database_url[:50]}...", file=sys.stderr, flush=True)
     log.info("Starting CipherTrust backend", network=settings.ALGORAND_NETWORK)
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         log.info("Database initialised")
     except Exception as exc:
-        print(f"[BOOT] DB FAILED: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
-        log.error("Database connection failed — app will start without DB", error=str(exc))
+        log.error("Database connection failed", error=str(exc))
+        raise
     await init_redis()
     log.info("Startup complete")
     yield
