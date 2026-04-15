@@ -49,8 +49,11 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 def run_migrations_online() -> None:
+    url = config.get_main_option("sqlalchemy.url")
+    if not url:
+        raise RuntimeError("sqlalchemy.url not configured in alembic.ini")
     connectable = create_engine(
-        config.get_main_option("sqlalchemy.url"),
+        url,
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:

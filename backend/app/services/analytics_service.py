@@ -236,9 +236,10 @@ class ComplianceAnalyticsService:
         r = None
         try:
             r = get_redis()
-            cached = await r.get(cache_key)
-            if cached:
-                return json.loads(cached)
+            if r:
+                cached = await r.get(cache_key)
+                if cached:
+                    return json.loads(cached)
         except Exception:
             pass  # Redis down — fall through
 
