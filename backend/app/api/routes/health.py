@@ -1,6 +1,7 @@
 """
 CipherTrust — Health check route
 """
+import os
 from fastapi import APIRouter
 from app.core.config import settings
 
@@ -13,4 +14,5 @@ async def health():
         "status": "ok",
         "service": "CipherTrust API",
         "network": settings.ALGORAND_NETWORK,
+        "db_configured": not settings.DATABASE_URL.endswith("localhost:5432/ciphertrust"),
     }
