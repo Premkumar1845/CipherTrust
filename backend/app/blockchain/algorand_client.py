@@ -30,14 +30,16 @@ class AlgorandClient:
         )
 
         # Deployer account (for paying transaction fees on behalf of contracts)
+        self.deployer_private_key = None
+        self.deployer_address = None
         if settings.ALGORAND_DEPLOYER_MNEMONIC:
-            self.deployer_private_key = mnemonic.to_private_key(
-                settings.ALGORAND_DEPLOYER_MNEMONIC
-            )
-            self.deployer_address = account.address_from_private_key(self.deployer_private_key)
-        else:
-            self.deployer_private_key = None
-            self.deployer_address = None
+            try:
+                self.deployer_private_key = mnemonic.to_private_key(
+                    settings.ALGORAND_DEPLOYER_MNEMONIC
+                )
+                self.deployer_address = account.address_from_private_key(self.deployer_private_key)
+            except Exception:
+                print("WARNING: Invalid ALGORAND_DEPLOYER_MNEMONIC — blockchain features disabled")
 
     def get_params(self) -> algosdk.transaction.SuggestedParams:
         return self.algod.suggested_params()
