@@ -22,7 +22,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CipherTrust — Privacy-Preserving Compliance on Algorand",
+  title: "CipherTrust",
   description:
     "Zero-knowledge proof based DPDPA compliance verification. Prove compliance without exposing personal data.",
   icons: {
