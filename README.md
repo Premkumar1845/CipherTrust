@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛡️ CipherTrust
+# CipherTrust
 
 ### Privacy-Preserving Regulatory Compliance on Algorand
 
@@ -8,13 +8,10 @@
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js_14-000?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![ZK Proofs](https://img.shields.io/badge/Proofs-Circom_Groth16-purple?style=for-the-badge)](https://docs.circom.io)
-[![Vercel](https://img.shields.io/badge/Frontend-Vercel-000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
 [![Docker](https://img.shields.io/badge/Backend-Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+
 
 **By BlockVeritas** · Zero-knowledge proof based DPDPA compliance infrastructure
-
-[🌐 Live Demo](https://ciphertrust.vercel.app) · [API Docs](#api-reference) · [Architecture](#system-architecture) · [Contributing](#contributing)
 
 </div>
 
@@ -68,7 +65,7 @@ CipherTrust solves this with a three-layer cryptographic approach:
 
 ## Key Features
 
-### 🔐 Privacy-First Consent Management
+###  Privacy-First Consent Management
 - User identifiers (emails, UUIDs) are **SHA-256 hashed** before storage
 - Raw personal data **never touches the database**
 - Consent records include type, purpose, timestamp, and expiry
@@ -76,39 +73,39 @@ CipherTrust solves this with a three-layer cryptographic approach:
 - Full revocation support with audit trail
 - **Pera Wallet on-chain anchoring** — users sign anchor transactions via Pera Wallet
 
-### 🧮 Zero-Knowledge Proof Generation
+###  Zero-Knowledge Proof Generation
 - **Circom 2** circuits with **Groth16** proving system
 - Proves consent count, validity, and timestamps without revealing data
 - **Auto ZK proof generation** — a proof is automatically created each time a consent record is anchored on-chain
 - Mock proof mode for development (no trusted setup required)
 - Full snarkjs-compatible proof format
 
-### ⛓️ Algorand Blockchain Verification
+###  Algorand Blockchain Verification
 - Proof hashes anchored on **Algorand TestNet** via smart contracts
 - Compliance certificates issued as **Algorand Standard Assets (ASAs)**
 - Transaction-level verification for regulators via [Lora Explorer](https://lora.algokit.io/testnet)
 - Pera Wallet integration for transaction signing
 
-### 📄 PDF Compliance Certificates
+###  PDF Compliance Certificates
 - **Downloadable PDF certificates** generated via reportlab
 - Professional layout with CipherTrust branding, details table, and verification section
 - Clickable Lora Explorer link for on-chain verification
 - One-click download from the certificates dashboard
 
-### 📊 Compliance Analytics Dashboard
+###  Compliance Analytics Dashboard
 - Real-time compliance scoring (0–100) with letter grades (A–F)
 - Risk flag detection (high / medium / low severity)
 - **Comprehensive stat cards** — total consents, active, anchored, revoked, proofs, certificates
 - 30-day trend charts for consent and proof activity
 - **Redis-cached** responses (~13ms response time)
 
-### 🏛️ Regulator Portal
+###  Regulator Portal
 - Dedicated regulator/auditor dashboard
 - Verify any organisation's compliance by ID
 - Verify any proof by Algorand transaction ID
 - View compliance scores across all organisations
 
-### 🎨 Premium Enterprise UI
+###  Premium Enterprise UI
 - Glassmorphism design system with animated particle network backgrounds
 - Animated SVG logo (shield + blockchain nodes + key)
 - Scroll-triggered reveal animations
